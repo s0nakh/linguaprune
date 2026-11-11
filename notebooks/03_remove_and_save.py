@@ -77,7 +77,8 @@ NB02_RESULTS_URL = f"{REPO_RAW}/experiments/02/results.csv"
 EVAL_LANGUAGES = {"kk": "kaz_Cyrl", "ru": "rus_Cyrl", "en": "eng_Latn"}
 N_EVAL = 150  # the same Belebele passages as notebook 02
 SEED = 0
-MIN_TOP1_AGREEMENT = 0.99  # share of positions where both models predict the same next token
+CONFIDENT_MARGIN = 2.0  # a position is "confident" if the reference top-1 logit leads the runner-up by ≥2
+MIN_CONFIDENT_AGREEMENT = 0.999  # where the model is confident, both models must predict the same token
 MAX_PPL_REL_DIFF = 0.005  # perplexity of the pruned model must match the simulation within 0.5%
 MAX_MEAN_LOGIT_DIFF = 0.05  # mean |difference| of logits; the max is only reported, since fp16 noise
                             # can flip one near-tied expert on one token and move that position a lot
@@ -219,7 +220,8 @@ print(pd.DataFrame({"original": {l: m["perplexity"] for l, m in base_metrics.ite
 #
 # `prune_experts` cuts the rows of removed experts out of every router and every expert weight
 # tensor, and sets `num_experts = KEEP` in the config. Then the pruned model must match the mask:
-# the same next-token predictions and the same perplexity (up to fp16 rounding).
+# the same perplexity (within 0.5%) and the same next-token prediction wherever the model is confident.
+# Where two tokens are almost tied, fp16 rounding may swap them — that is noise, not a bug.
 #
 # ---
 #
@@ -227,17 +229,27 @@ print(pd.DataFrame({"original": {l: m["perplexity"] for l, m in base_metrics.ite
 #
 # `prune_experts` вырезает строки уволенных экспертов из каждого роутера и каждого тензора весов
 # экспертов и ставит в конфиге `num_experts = KEEP`. После этого уменьшенная модель должна совпасть
-# с маской: те же предсказания следующего токена и та же перплексия (с точностью до округления fp16).
+# с маской: та же перплексия (в пределах 0,5%) и тот же следующий токен везде, где модель уверена.
+# Где два токена почти равны, округление fp16 может поменять их местами: это шум, а не ошибка.
 
 # %%
 def compare_logits(reference: list[torch.Tensor], candidate: list[torch.Tensor]) -> dict[str, float]:
-    """Max and mean |logit difference| and the share of positions with the same top-1 token."""
-    diffs = [(a - b).abs() for a, b in zip(reference, candidate)]
-    same = sum((a.argmax(-1) == b.argmax(-1)).sum().item() for a, b in zip(reference, candidate))
-    total = sum(a.shape[0] for a in reference)
-    return {"max_logit_diff": max(d.max().item() for d in diffs),
-            "mean_logit_diff": float(torch.cat([d.flatten() for d in diffs]).mean()),
-            "top1_agreement": same / total}
+    """Logit differences and top-1 agreement, overall and on positions where the reference is confident.
+
+    fp16 rounding differs slightly between the masked and the pruned model (different matrix shapes).
+    Where two next tokens are almost tied, that noise can swap them — harmless. Where the model is
+    confident (top-1 leads by ≥ CONFIDENT_MARGIN logits), a swap would signal a real bug.
+    """
+    ref, cand = torch.cat(reference), torch.cat(candidate)
+    same = ref.argmax(-1) == cand.argmax(-1)
+    top2 = ref.topk(2, dim=-1).values
+    confident = (top2[:, 0] - top2[:, 1]) >= CONFIDENT_MARGIN
+    diff = (ref - cand).abs()
+    return {"max_logit_diff": diff.max().item(),
+            "mean_logit_diff": diff.mean().item(),
+            "top1_agreement": same.float().mean().item(),
+            "confident_share": confident.float().mean().item(),
+            "confident_top1_agreement": same[confident].float().mean().item() if confident.any() else float("nan")}
 
 
 report = prune_experts(model, KEPT)
@@ -250,12 +262,15 @@ pruned_logits = probe_logits(model)
 vs_mask = compare_logits(mask_logits, pruned_logits)
 pruned_metrics = evaluate_all(model)
 ppl_rel_diff = max(abs(pruned_metrics[l]["perplexity"] / mask_metrics[l]["perplexity"] - 1) for l in EVAL_LANGUAGES)
-print(f"Pruned vs. mask: top-1 agreement {vs_mask['top1_agreement']:.4f} (≥{MIN_TOP1_AGREEMENT}), "
-      f"max perplexity difference {ppl_rel_diff:.4%} (≤{MAX_PPL_REL_DIFF:.1%}), "
+print(f"Pruned vs. mask: max perplexity difference {ppl_rel_diff:.4%} (≤{MAX_PPL_REL_DIFF:.1%}), "
       f"mean logit diff {vs_mask['mean_logit_diff']:.4f} (≤{MAX_MEAN_LOGIT_DIFF}), "
-      f"max logit diff {vs_mask['max_logit_diff']:.3f} (reported only)")
-if not (vs_mask["top1_agreement"] >= MIN_TOP1_AGREEMENT and ppl_rel_diff <= MAX_PPL_REL_DIFF
-        and vs_mask["mean_logit_diff"] <= MAX_MEAN_LOGIT_DIFF):
+      f"top-1 agreement on confident positions {vs_mask['confident_top1_agreement']:.4f} "
+      f"(≥{MIN_CONFIDENT_AGREEMENT}; {vs_mask['confident_share']:.0%} of positions are confident)")
+print(f"  reported only: top-1 agreement on all positions {vs_mask['top1_agreement']:.4f}, "
+      f"max logit diff {vs_mask['max_logit_diff']:.3f}")
+checks_passed = (ppl_rel_diff <= MAX_PPL_REL_DIFF and vs_mask["mean_logit_diff"] <= MAX_MEAN_LOGIT_DIFF
+                 and vs_mask["confident_top1_agreement"] >= MIN_CONFIDENT_AGREEMENT)  # NaN fails
+if not checks_passed:
     raise RuntimeError("The pruned model does not match the simulated removal — do not trust or save it.")
 
 # %% [markdown]
