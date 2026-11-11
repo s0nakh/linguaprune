@@ -5,8 +5,6 @@
 #
 # **Author:** Sophia Akhmetova ([@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
-# *[Русская версия](https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/01_expert_profiling.ipynb) · part of [LinguaPrune](https://github.com/s0nakh/linguaprune)*
-#
 # **Goal:** find out which experts of a Mixture-of-Experts (MoE) model actually work when the model
 # reads Kazakh text, and estimate how many experts could be removed.
 #
@@ -22,6 +20,28 @@
 # **What this notebook does NOT prove.** We count *how often* the router picks each expert.
 # Frequency ≠ importance: a rarely used expert can still be critical for rare but necessary tokens.
 # So "covering 90% of router picks" ≠ "keeping 90% of quality". Quality is measured in notebook 02.
+#
+# ---
+#
+# 🇷🇺 **01 · Какие эксперты MoE «говорят» на казахском языке**
+#
+# **Цель:** понять, какие эксперты модели-«смеси экспертов» (MoE) реально работают,
+# когда модель читает текст на казахском языке, и сколько экспертов можно было бы убрать.
+#
+# **Модель:** `allenai/OLMoE-1B-7B-0125` (открытая, Apache 2.0, 64 эксперта в слое, 8 активных на токен).
+# Это «тренажёр» перед AlemLLM: метод тот же, но модель помещается в бесплатный Kaggle.
+#
+# **Данные:** Википедия (`wikimedia/wikipedia`, снимок 2023-11-01) на казахском, русском, английском
+# и китайском языках — только открытые данные, никаких клиентских. В китайской Википедии смешаны
+# упрощённые и традиционные иероглифы.
+#
+# **Запуск на Kaggle:** Settings → Accelerator → **GPU T4 x2**, Internet → **On**, затем Run All.
+# Результаты (картинки + json) появятся в `/kaggle/working/results`.
+#
+# **Чего этот ноутбук НЕ доказывает.** Мы считаем, *как часто* роутер выбирает эксперта.
+# Частота ≠ важность: редкий эксперт может быть критичен для редких, но нужных токенов.
+# Поэтому «покрыть 90% выборов» ≠ «сохранить 90% качества». Качество проверяется только в ноутбуке 02.
+
 
 # %%
 import json
@@ -76,12 +96,22 @@ VERSIONS = {
 }
 print(VERSIONS, f"| GPU x{torch.cuda.device_count()}")
 
+
 # %% [markdown]
 # ## 1. Load the model and find the routers
 #
 # In every layer the router (`mlp.gate`) decides which experts receive a token:
 # it outputs 64 numbers (logits), and the token goes to the 8 experts with the largest ones.
 # We attach a forward hook to each router and record those numbers.
+#
+# ---
+#
+# 🇷🇺 **1. Загружаем модель и находим роутеры**
+#
+# Роутер (`mlp.gate`) в каждом слое решает, каким экспертам отдать токен:
+# он выдаёт 64 числа (логиты), и токен уходит к 8 экспертам с самыми большими.
+# Мы ставим на роутер «жучок» (forward hook) и записываем эти числа.
+
 
 # %%
 def read_moe_config(config) -> tuple[int, int]:
@@ -122,6 +152,7 @@ NUM_LAYERS = len(ROUTERS)
 INPUT_DEVICE = model.get_input_embeddings().weight.device
 print(f"Layers with a router: {NUM_LAYERS}, experts per layer: {NUM_EXPERTS}, active per token: {TOP_K}")
 print(f"Model revision: {MODEL_REVISION}")
+
 
 # %%
 def extract_router_logits(output, num_experts: int) -> torch.Tensor:
@@ -173,6 +204,15 @@ class RouterRecorder:
 # Before trusting any statistics, check that the hook sees the same decisions as the model itself.
 # The model can return its own router logits (`output_router_logits=True`); we compare the chosen
 # experts for every token in every layer. If they disagree, we stop here.
+#
+# ---
+#
+# 🇷🇺 **Самопроверка «жучка»**
+#
+# Прежде чем верить статистике, убедимся, что «жучок» видит те же решения, что и сама модель.
+# Модель умеет сама отдавать логиты роутеров (`output_router_logits=True`) — сравниваем
+# выбранных экспертов по каждому токену в каждом слое. Если не совпало — дальше не идём.
+
 
 # %%
 def topk_sets(logits: torch.Tensor, top_k: int) -> torch.Tensor:
@@ -201,6 +241,7 @@ if agreement < SELF_TEST_MIN_AGREEMENT:
     recorder.remove()
     raise RuntimeError("The hook does not see what the model picks — the statistics cannot be trusted.")
 
+
 # %% [markdown]
 # ## 2. Run texts in four languages
 #
@@ -211,6 +252,19 @@ if agreement < SELF_TEST_MIN_AGREEMENT:
 # **Sampling limitation.** Streaming `shuffle` only mixes a buffer of 10,000 articles (plus shard order),
 # so we see a slice of Wikipedia, not all of it. That is enough for an estimate; final numbers should
 # use a parallel corpus (FLORES, KazParC).
+#
+# ---
+#
+# 🇷🇺 **2. Прогоняем тексты на четырёх языках**
+#
+# На каждый язык — одинаковый бюджет токенов, чтобы сравнение было честным.
+# Первый токен каждой статьи не считаем: модель обрабатывает его нетипично
+# («сток внимания», attention sink), и он исказил бы статистику.
+#
+# **Ограничение выборки.** `shuffle` в режиме стриминга перемешивает только буфер из
+# 10 000 статей (и порядок файлов-шардов), поэтому мы видим не всю Википедию, а её кусок.
+# Для оценки «на глаз» этого достаточно; для финальных цифр — параллельный корпус (FLORES, KazParC).
+
 
 # %%
 def iter_wiki_texts(wiki_config: str):
@@ -266,6 +320,7 @@ try:
 finally:
     recorder.remove()
 
+
 # %% [markdown]
 # ## 3. Analysis: how many experts Kazakh actually needs
 #
@@ -274,6 +329,17 @@ finally:
 #   other half (like train/test) — otherwise the estimate is inflated;
 # - **bootstrap:** resample articles many times and see how much the number of needed experts varies —
 #   this gives an interval instead of a single number.
+#
+# ---
+#
+# 🇷🇺 **3. Анализ: сколько экспертов реально нужно казахскому языку**
+#
+# Честность оценки обеспечиваем двумя приёмами из обычного ML:
+# - **отложенная выборка:** экспертов выбираем по половине статей, а покрытие меряем на другой
+#   половине (как train/test) — иначе оценка завышена;
+# - **бутстрэп:** много раз пересэмплируем статьи и смотрим, как «гуляет» число нужных экспертов —
+#   это даёт интервал вместо одной цифры.
+
 
 # %%
 def selection_share(counts: np.ndarray) -> np.ndarray:
@@ -328,6 +394,7 @@ for lang, needed in needed_per_layer.items():
 print(f"\n{' + '.join(TARGET_LANGUAGES)} together need {kept_for_targets.mean():.1f} of {NUM_EXPERTS}")
 print(f"→ estimate: ~{prunable_fraction:.0%} of experts could be removed (hypothesis; quality is tested in notebook 02)")
 
+
 # %%
 def holdout_coverage() -> dict[str, float]:
     """Choose experts on even-numbered articles, measure coverage on odd-numbered ones."""
@@ -358,12 +425,22 @@ print(f"Experts to keep, 95% bootstrap interval: {boot_low:.1f}–{boot_high:.1f
 print("Coverage by router probability mass (not by pick count):",
       {k: f"{v:.1%}" for k, v in mass_coverage.items()})
 
+
 # %% [markdown]
 # ## 4. Figures
 #
 # Caveat: differences between languages here mix "language" and "topic". Wikipedias in different
 # languages cover different subjects (Kazakh Wikipedia has many articles about villages of Kazakhstan),
 # so a "Kazakh" expert may really be a geography expert. A parallel corpus will separate the two.
+#
+# ---
+#
+# 🇷🇺 **4. Картинки**
+#
+# Важно: различия между языками здесь — смесь «языка» и «темы». Статьи Википедии на разных
+# языках пишут о разном (в казахской больше статей про сёла Казахстана), поэтому «казахский»
+# эксперт может оказаться экспертом по географии. Развести это поможет параллельный корпус.
+
 
 # %%
 share_max = max(s.max() for s in shares.values())  # shared color scale so panels are comparable
@@ -376,6 +453,7 @@ axes[0].set_ylabel("layer")
 fig.colorbar(im, ax=axes, shrink=0.8)
 fig.savefig(OUTPUT_DIR / "expert_share_by_language.png", dpi=150, bbox_inches="tight")
 plt.show()
+
 
 # %%
 kk_specificity = specificity(shares, "kk")
@@ -390,6 +468,7 @@ fig.colorbar(im, ax=ax)
 fig.savefig(OUTPUT_DIR / "kk_specificity.png", dpi=150, bbox_inches="tight")
 plt.show()
 
+
 # %%
 fig, ax = plt.subplots(figsize=(10, 4))
 for lang, needed in needed_per_layer.items():
@@ -403,8 +482,14 @@ ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1))  # legend outside so it do
 fig.savefig(OUTPUT_DIR / "experts_needed_per_layer.png", dpi=150, bbox_inches="tight")
 plt.show()
 
+
 # %% [markdown]
 # ## 5. Save results (used by notebook 02: pruning and quality checks)
+#
+# ---
+#
+# 🇷🇺 **5. Сохраняем результаты (понадобятся для ноутбука 02 — обрезка и проверка качества)**
+
 
 # %%
 np.savez_compressed(

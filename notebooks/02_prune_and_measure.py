@@ -5,8 +5,6 @@
 #
 # **Author:** Sophia Akhmetova ([@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
-# *[Русская версия](https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/02_prune_and_measure.ipynb) · part of [LinguaPrune](https://github.com/s0nakh/linguaprune)*
-#
 # **Question:** if we remove the experts that Kazakh and Russian rarely need, does the model get
 # worse at Kazakh and Russian?
 #
@@ -29,6 +27,34 @@
 #
 # **Run:** GPU T4 x2, Internet On, then **Save Version → Save & Run All (Commit)** —
 # takes ~2–2.5 hours, the tab can be closed. Results are in the Output tab → `results`.
+#
+# ---
+#
+# 🇷🇺 **02 · «Увольняем» экспертов и проверяем, не поглупела ли модель**
+#
+# **Вопрос:** если убрать экспертов, которые редко нужны казахскому и русскому, станет ли модель
+# хуже понимать казахский и русский?
+#
+# **Аналогия.** В компании 64 сотрудника на этаж. Мы увольняем часть и смотрим, справляется ли
+# офис с казахскими и русскими клиентами. Чтобы проверка была честной, сравниваем 4 способа
+# выбрать, кого оставить:
+#
+# | Способ | Кого оставляем | Зачем |
+# |---|---|---|
+# | `freq_kkru` | тех, кого роутер чаще всего зовёт на kk и ru | **наш метод** |
+# | `weighted_kkru` | то же, но учитываем, *с каким весом* зовёт | улучшенный наш метод |
+# | `freq_en` | тех, кого чаще зовут на английском | контроль: важен ли язык калибровки |
+# | `random` (×5) | случайных, пять разных жеребьёвок | нижняя граница: если наш метод не лучше — он не работает |
+#
+# **Как меряем качество** — на Belebele (тексты на kk, ru и en с одинаковым смыслом):
+# - **перплексия** — насколько модель «удивлена» текстом. Меньше = лучше понимает язык.
+#   Это **главная** метрика: она считается по ~40 тыс. токенов на язык и поэтому точная;
+# - **точность** на вопросах к тексту (4 варианта ответа; угадывание = 25%). На 150 вопросах
+#   её погрешность около ±8 п.п., поэтому она только для общей картины.
+#
+# **Запуск:** GPU T4 x2, Internet On, затем **Save Version → Save & Run All (Commit)** —
+# прогон идёт ~2–2.5 часа, вкладку можно закрыть. Результаты — во вкладке Output → `results`.
+
 
 # %%
 import json
@@ -80,10 +106,18 @@ VERSIONS = {
 }
 print(VERSIONS, f"| GPU x{torch.cuda.device_count()}")
 
+
 # %% [markdown]
 # ## 1. Load the model
 #
 # The same OLMoE as in notebook 01. In each of the 16 layers the router picks 8 of 64 experts.
+#
+# ---
+#
+# 🇷🇺 **1. Загружаем модель**
+#
+# Тот же OLMoE, что в ноутбуке 01. В каждом из 16 слоёв роутер выбирает 8 экспертов из 64.
+
 
 # %%
 def load_model(model_id: str, revision: str):
@@ -118,6 +152,7 @@ TOP_K = ROUTERS[0].top_k
 INPUT_DEVICE = model.get_input_embeddings().weight.device
 print(f"Layers: {NUM_LAYERS}, experts: {NUM_EXPERTS}, active: {TOP_K}, revision: {MODEL_REVISION}")
 
+
 # %% [markdown]
 # ## 2. How to remove an expert without touching the model files
 #
@@ -129,6 +164,19 @@ print(f"Layers: {NUM_LAYERS}, experts: {NUM_EXPERTS}, active: {TOP_K}, revision:
 # has proven itself.)
 #
 # In "recording" mode the same hook counts how often, and with what weight, each expert is picked.
+#
+# ---
+#
+# 🇷🇺 **2. Как «уволить» эксперта, не трогая файлы модели**
+#
+# Роутер считает для каждого эксперта число-«оценку» и отдаёт токен 8 экспертам с лучшими оценками.
+# Мы перехватываем роутер и уволенным экспертам ставим оценку **минус бесконечность**:
+# их больше никогда не выберут, а веса оставшихся пересчитаются, как будто уволенных и не было.
+# Математически это **то же самое**, что физически удалить экспертов из модели —
+# только проще и обратимо (память мы сэкономим позже, когда метод докажет, что работает).
+#
+# Тот же перехватчик в режиме «запись» считает, как часто и с каким весом выбирают каждого эксперта.
+
 
 # %%
 def masked_routing(router, logits: torch.Tensor, mask: torch.Tensor):
@@ -193,6 +241,7 @@ def build_mask(kept_layer: np.ndarray, router) -> torch.Tensor:
 
 controller = RouterController(ROUTERS)
 
+
 # %% [markdown]
 # ### Removal self-tests (four checks)
 #
@@ -203,6 +252,19 @@ controller = RouterController(ROUTERS)
 # 4. In a real forward pass, no layer may pick a removed expert.
 #
 # Plus an fp16 overflow guard: if a NaN appears anywhere, the notebook stops instead of producing garbage.
+#
+# ---
+#
+# 🇷🇺 **Самопроверка увольнения (четыре проверки)**
+#
+# 1. Если «уволить» никого (маска из нулей), ответы модели должны совпасть с исходными.
+# 2. Если уволить половину, ответы должны измениться (иначе перехват не работает).
+# 3. Маска должна давать **ровно то же**, что настоящее удаление: берём роутер, физически
+#    вырезаем из него строки уволенных экспертов и сравниваем выбор и веса с нашей маской.
+# 4. В настоящем прогоне модели ни один слой не должен выбрать уволенного эксперта.
+#
+# Плюс защита от переполнения fp16: если где-то появится NaN, ноутбук остановится, а не выдаст мусор.
+
 
 # %%
 SELF_TEST_TEXTS = (
@@ -296,11 +358,20 @@ checks_passed = (diff_same <= 1e-2) and (diff_changed >= 1e-1) and physical_ok a
 if not checks_passed:
     raise RuntimeError("Removal self-test failed — the results cannot be trusted.")
 
+
 # %% [markdown]
 # ## 3. Calibration: which experts the router uses for Kazakh, Russian and English
 #
 # As in notebook 01: run 100k Wikipedia tokens per language and count the picks.
 # Quality is then measured on **different** texts (Belebele) — otherwise the test would not be fair.
+#
+# ---
+#
+# 🇷🇺 **3. Калибровка: кого роутер зовёт на казахском, русском и английском**
+#
+# Как в ноутбуке 01: прогоняем 100 тыс. токенов Википедии на каждом языке и считаем выборы.
+# Качество потом меряем на **других** текстах (Belebele) — иначе проверка была бы нечестной.
+
 
 # %%
 def iter_wiki_texts(wiki_config: str):
@@ -339,11 +410,20 @@ for lang, wiki_config in CALIBRATION_LANGUAGES.items():
     calibration = {**calibration, lang: calibrate(wiki_config)}
     print(f"calibration {lang}: {time.time() - started:.0f} s")
 
+
 # %% [markdown]
 # ## 4. Four ways to choose who stays
 #
 # Each method gives every expert in every layer a "usefulness score".
 # We keep the K experts with the best scores — the same K for every method, so the comparison is fair.
+#
+# ---
+#
+# 🇷🇺 **4. Четыре способа выбрать, кого оставить**
+#
+# Для каждого способа у каждого эксперта в каждом слое есть «оценка полезности».
+# Оставляем K экспертов с лучшими оценками — одинаковое K для всех способов, чтобы сравнение было честным.
+
 
 # %%
 def row_share(x: np.ndarray) -> np.ndarray:
@@ -379,12 +459,22 @@ overlap = np.mean([len(np.intersect1d(a, b)) for a, b in zip(top_experts(SCORES[
                                                                 top_experts(SCORES["freq_en"], 38))])
 print(f"At K=38 the 'kk+ru' and 'en' sets share {overlap:.1f} of 38 experts on average")
 
+
 # %% [markdown]
 # ## 5. The exam: Belebele
 #
 # We take the same 150 passages in three languages. For each one we:
 # - compute perplexity on the passage itself;
 # - ask a 4-option question and check which letter (A/B/C/D) the model gives the highest probability.
+#
+# ---
+#
+# 🇷🇺 **5. Экзамен: Belebele**
+#
+# Берём одни и те же 150 отрывков на трёх языках. Для каждого:
+# - считаем перплексию на самом отрывке;
+# - задаём вопрос с 4 вариантами и смотрим, какой букве (A/B/C/D) модель даёт больше вероятности.
+
 
 # %%
 ANSWER_LETTERS = (" A", " B", " C", " D")
@@ -438,6 +528,7 @@ EVAL_ROWS = load_eval_rows()
 EXAMPLES = {lang: [build_example(row) for _, row in df.iterrows()] for lang, df in EVAL_ROWS.items()}
 print({lang: len(ex) for lang, ex in EXAMPLES.items()}, "examples per language")
 
+
 # %%
 @torch.inference_mode()
 def evaluate_language(examples: list[dict]) -> dict[str, float]:
@@ -462,12 +553,22 @@ def evaluate_language(examples: list[dict]) -> dict[str, float]:
         "picked_ABCD": "/".join(str(n) for n in picked),  # shows if the model always presses one letter
     }
 
+
 # %% [markdown]
 # ## 6. Main run
 #
 # First the original model (all 64 experts), then every method × 4 team sizes.
 # After each configuration the results are appended to `results/results.csv` —
 # if the session dies, finished work is not lost.
+#
+# ---
+#
+# 🇷🇺 **6. Главный прогон**
+#
+# Сначала исходная модель (все 64 эксперта), затем 4 способа × 4 размера команды = 16 вариантов.
+# После каждого варианта результаты дописываются в `results/results.csv` —
+# если сессия оборвётся, сделанное не пропадёт.
+
 
 # %%
 def run_config(method: str, keep: int) -> list[dict]:
@@ -491,11 +592,20 @@ for number, (method, keep) in enumerate(configs, start=1):
     print(f"[{number}/{len(configs)}] {method:>14} K={keep:<2} | {took:.0f} s | "
           f"~{took * (len(configs) - number) / 60:.0f} min left")
 
+
 # %% [markdown]
 # ## 7. Results
 #
 # **How to read the table:** each number is how many times perplexity grew compared with the
 # original model. `1.00` = nothing lost, `1.20` = the model is 20% more "surprised" by the text.
+#
+# ---
+#
+# 🇷🇺 **7. Результаты**
+#
+# **Как читать таблицу:** число — во сколько раз выросла перплексия по сравнению с исходной моделью.
+# `1.00` = ничего не потеряли, `1.20` = модель «удивляется» тексту на 20% больше.
+
 
 # %%
 df = pd.DataFrame(results)
@@ -519,6 +629,7 @@ accuracy_table = df[df.method != "base"].pivot_table(index=["keep", "method"], c
 print("\nQuestion accuracy (chance = 0.25):")
 print(accuracy_table[["kk", "ru", "en"]].round(3))
 
+
 # %%
 fig, axes = plt.subplots(1, 3, figsize=(16, 4), sharey=True)
 for ax, lang in zip(axes, ("kk", "ru", "en")):
@@ -538,6 +649,7 @@ axes[0].legend()
 fig.savefig(OUTPUT_DIR / "perplexity_vs_experts.png", dpi=150, bbox_inches="tight")
 plt.show()
 
+
 # %% [markdown]
 # ## 8. Save
 #
@@ -548,6 +660,19 @@ plt.show()
 #
 # **Limitations:** calibration on Wikipedia, evaluation on Belebele — different texts (fair, but the
 # domains differ); K is the same in every layer, although layers use experts differently.
+#
+# ---
+#
+# 🇷🇺 **8. Сохраняем**
+#
+# **Что мы надеемся увидеть:** на kk и ru линии `freq_kkru`/`weighted_kkru` заметно ниже, чем `random`
+# и `freq_en`. На en — наоборот (английским мы жертвуем сознательно).
+# **Если `freq_kkru` попадает в серый «коридор» случайных** — частота выбора не годится как критерий
+# (гипотеза: тогда поможет REAP, который учитывает ещё и силу вклада эксперта).
+#
+# **Ограничения:** калибровка на Википедии, проверка на Belebele — разные тексты (это честно, но домены
+# различаются); K одинаковое во всех слоях, хотя слои используют экспертов по-разному.
+
 
 # %%
 controller.remove()

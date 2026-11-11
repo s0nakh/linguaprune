@@ -6,12 +6,24 @@
 Keep the experts your languages actually use, drop the rest, then quantize.
 First target: Kazakh 🇰🇿 + Russian.
 
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.x-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
-[![Transformers](https://img.shields.io/badge/%F0%9F%A4%97%20Transformers-5.x-FFD21E)](https://github.com/huggingface/transformers)
-[![Runs on Kaggle](https://img.shields.io/badge/runs%20on-Kaggle%20T4%20x2-20BEFF?logo=kaggle&logoColor=white)](https://www.kaggle.com/)
-[![Status](https://img.shields.io/badge/status-research%20preview-orange)](#roadmap)
+<p>
+<a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
+<a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
+<a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
+<a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
+</p>
+<p>
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-39FF14?style=for-the-badge&labelColor=0D1117&logo=python&logoColor=white"></a>
+<a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=for-the-badge&labelColor=0D1117&logo=pytorch&logoColor=white"></a>
+<a href="https://github.com/huggingface/transformers"><img alt="Transformers" src="https://img.shields.io/badge/Transformers-5.x-FFD21E?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
+<a href="https://www.kaggle.com/"><img alt="Kaggle" src="https://img.shields.io/badge/Kaggle-GPU%20T4%20%C3%972-20BEFF?style=for-the-badge&labelColor=0D1117&logo=kaggle&logoColor=white"></a>
+</p>
+<p>
+<a href="https://huggingface.co/allenai/OLMoE-1B-7B-0125"><img alt="Model" src="https://img.shields.io/badge/model-OLMoE--1B--7B-F0529C?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
+<a href="https://huggingface.co/datasets/facebook/belebele"><img alt="Eval" src="https://img.shields.io/badge/eval-Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
+<a href="#"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
+<a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
+</p>
 
 [Русская версия](README.ru.md) · [Related work](docs/prior-art.md)
 
@@ -102,6 +114,8 @@ The notebook verifies this with built-in self-tests before measuring anything.
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts each language uses; how many could be removed | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
 | 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Remove experts and measure quality on kk/ru/en against random and English baselines | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
 
+Notebooks are bilingual: English first, Russian translation below each text cell.
+
 **Run on Kaggle:**
 1. Click *Open in Kaggle*.
 2. Set **Accelerator → GPU T4 x2** and **Internet → On**.
@@ -127,10 +141,9 @@ Notebooks are edited as plain Python (`# %%` cells) and converted:
 
 ```bash
 python3 scripts/py_to_ipynb.py notebooks/02_prune_and_measure.py
-python3 scripts/check_translations.py   # translations in notebooks/ru must have identical code
 ```
 
-Russian translations of the notebooks live in [`notebooks/ru/`](notebooks/ru/).
+Notebooks are bilingual: every text cell is in English first, with a Russian translation below.
 
 ## Citation
 
