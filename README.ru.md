@@ -94,13 +94,14 @@
 
 ## Ноутбуки
 
-| # | Ноутбук | Что делает | Открыть |
+| # | Ноутбук | Что делает | Запустить свою копию |
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Каких экспертов использует каждый язык; сколько можно убрать | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
 | 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Убрать экспертов и измерить качество на kk/ru/en в сравнении со случайными и «английскими» экспертами | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
 | 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Физически удалить экспертов, проверить, что уменьшенная модель совпадает с имитацией, сохранить и загрузить заново | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
 
 Ноутбуки двуязычные: в каждом текстовом блоке сначала английский, ниже русский перевод.
+Кнопка *Open in Kaggle* создаёт **твою собственную копию** ноутбука в твоём аккаунте Kaggle.
 
 **Запуск на Kaggle:**
 1. Нажми *Open in Kaggle* в таблице выше.

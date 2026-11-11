@@ -111,13 +111,14 @@ The notebook verifies this with built-in self-tests before measuring anything.
 
 ## Notebooks
 
-| # | Notebook | What it does | Open |
+| # | Notebook | What it does | Run your own copy |
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts each language uses; how many could be removed | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
 | 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Remove experts and measure quality on kk/ru/en against random and English baselines | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
 | 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Physically delete the experts, verify the smaller model matches the simulation, save and reload it | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
 
 Notebooks are bilingual: English first, Russian translation below each text cell.
+*Open in Kaggle* creates **your own copy** of the notebook in your Kaggle account.
 
 **Run on Kaggle:**
 1. Click *Open in Kaggle*.
