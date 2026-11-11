@@ -13,7 +13,7 @@
 [![Runs on Kaggle](https://img.shields.io/badge/runs%20on-Kaggle%20T4%20x2-20BEFF?logo=kaggle&logoColor=white)](https://www.kaggle.com/)
 [![Status](https://img.shields.io/badge/status-research%20preview-orange)](#дорожная-карта)
 
-[English](README.md) · [Связанные работы](docs/prior-art.md)
+[English](README.md) · [Связанные работы](docs/prior-art.ru.md)
 
 </div>
 
@@ -24,7 +24,7 @@
 Суверенные и многоязычные MoE-модели огромные. Например, MoE на 247 млрд параметров весит ~494 ГБ в BF16, это около 7 серверных видеокарт. Но для казахского и русского модель редко зовёт многих своих экспертов. LinguaPrune измеряет, **какие эксперты реально нужны языку**, и убирает остальных, чтобы модели хватало меньшего числа видеокарт.
 
 > Это **эмпирическое исследование и открытый инструмент**, а не новый метод.
-> Прунинг экспертов (например, REAP) и языковой прунинг уже существуют, см. [связанные работы](docs/prior-art.md).
+> Прунинг экспертов (например, REAP) и языковой прунинг уже существуют, см. [связанные работы](docs/prior-art.ru.md).
 > Наш вклад — казахский + русский: измерено, воспроизводимо и честно о потере качества.
 
 ## Результаты
@@ -43,7 +43,7 @@
 - На **отложенных статьях** покрытие 96% (kk) и 91% (ru).
 - ⚠️ Это частота выбора экспертов, **а не качество** модели. Качество меряет ноутбук 02.
 
-<img src="experiments/01/experts_needed_per_layer.png" alt="Сколько экспертов нужно по слоям" width="720">
+<img src="experiments/01/ru/experts_needed_per_layer.png" alt="Сколько экспертов нужно по слоям" width="720">
 
 - **Глубоким слоям нужно намного меньше экспертов.** В слое 14 казахскому хватает 12 из 64, а в первых слоях нужно ~40. Значит, резать стоит по-разному в разных слоях.
 - **Воспроизводимо:** два независимых прогона на Kaggle дали одинаковые цифры и одинаковые наборы экспертов в каждом слое (версия модели `9b0c1aa`).
@@ -52,13 +52,15 @@
 
 ## Ноутбуки
 
-| # | Ноутбук | Что делает |
-|---|---|---|
-| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Каких экспертов использует каждый язык; сколько можно убрать |
-| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Убрать экспертов и измерить качество на kk/ru/en в сравнении со случайными и «английскими» экспертами |
+| # | Ноутбук | Что делает | Открыть |
+|---|---|---|---|
+| 01 | [`01_expert_profiling`](notebooks/ru/01_expert_profiling.ipynb) | Каких экспертов использует каждый язык; сколько можно убрать | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/01_expert_profiling.ipynb) |
+| 02 | [`02_prune_and_measure`](notebooks/ru/02_prune_and_measure.ipynb) | Убрать экспертов и измерить качество на kk/ru/en в сравнении со случайными и «английскими» экспертами | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/02_prune_and_measure.ipynb) |
+
+Это русские версии ноутбуков; [английские](notebooks/) — основные, код в них одинаковый.
 
 **Запуск на Kaggle:**
-1. Нажми *Open in Kaggle* в [английском README](README.md#notebooks).
+1. Нажми *Open in Kaggle* в таблице выше.
 2. Выбери **GPU T4 x2**, **Internet On**.
 3. Нажми **Save Version → Save & Run All**.
 

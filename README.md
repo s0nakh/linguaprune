@@ -80,8 +80,6 @@ The notebook verifies this with built-in self-tests before measuring anything.
 3. Run **Save Version → Save & Run All**.
 4. Results land in `/kaggle/working/results`.
 
-Notebook comments are currently in Russian; an English translation is planned.
-
 ## Roadmap
 
 - [x] 01 · Router profiling on OLMoE
@@ -100,7 +98,10 @@ Notebooks are edited as plain Python (`# %%` cells) and converted:
 
 ```bash
 python3 scripts/py_to_ipynb.py notebooks/02_prune_and_measure.py
+python3 scripts/check_translations.py   # translations in notebooks/ru must have identical code
 ```
+
+Russian translations of the notebooks live in [`notebooks/ru/`](notebooks/ru/).
 
 ## Citation
 

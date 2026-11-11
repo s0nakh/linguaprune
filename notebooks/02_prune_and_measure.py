@@ -1,28 +1,30 @@
 # %% [markdown]
-# # 02 · «Увольняем» экспертов и проверяем, не поглупела ли модель
+# # 02 · Remove experts and check whether the model got worse
 #
-# **Вопрос:** если убрать экспертов, которые редко нужны казахскому и русскому, станет ли модель
-# хуже понимать казахский и русский?
+# *[Русская версия](https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/02_prune_and_measure.ipynb) · part of [LinguaPrune](https://github.com/s0nakh/linguaprune)*
 #
-# **Аналогия.** В компании 64 сотрудника на этаж. Мы увольняем часть и смотрим, справляется ли
-# офис с казахскими и русскими клиентами. Чтобы проверка была честной, сравниваем 4 способа
-# выбрать, кого оставить:
+# **Question:** if we remove the experts that Kazakh and Russian rarely need, does the model get
+# worse at Kazakh and Russian?
 #
-# | Способ | Кого оставляем | Зачем |
+# **Analogy.** A company has 64 employees per floor. We let some of them go and check whether the
+# office still serves Kazakh- and Russian-speaking clients well. To make the test fair, we compare
+# four ways of choosing who stays:
+#
+# | Method | Who stays | Why |
 # |---|---|---|
-# | `freq_kkru` | тех, кого роутер чаще всего зовёт на kk и ru | **наш метод** |
-# | `weighted_kkru` | то же, но учитываем, *с каким весом* зовёт | улучшенный наш метод |
-# | `freq_en` | тех, кого чаще зовут на английском | контроль: важен ли язык калибровки |
-# | `random` (×5) | случайных, пять разных жеребьёвок | нижняя граница: если наш метод не лучше — он не работает |
+# | `freq_kkru` | experts the router picks most often for kk and ru | **our method** |
+# | `weighted_kkru` | same, but weighted by *how strongly* the router picks them | improved variant |
+# | `freq_en` | experts picked most often for English | control: does the calibration language matter? |
+# | `random` (×5) | random experts, five independent draws | lower bound: if our method is not better, it does not work |
 #
-# **Как меряем качество** — на Belebele (тексты на kk, ru и en с одинаковым смыслом):
-# - **перплексия** — насколько модель «удивлена» текстом. Меньше = лучше понимает язык.
-#   Это **главная** метрика: она считается по ~40 тыс. токенов на язык и поэтому точная;
-# - **точность** на вопросах к тексту (4 варианта ответа; угадывание = 25%). На 150 вопросах
-#   её погрешность около ±8 п.п., поэтому она только для общей картины.
+# **How quality is measured** — on Belebele (the same passages in kk, ru and en):
+# - **perplexity** — how "surprised" the model is by the text. Lower = understands the language better.
+#   This is the **primary** metric: it uses ~40k tokens per language, so it is precise;
+# - **accuracy** on reading-comprehension questions (4 options; chance = 25%). With 150 questions
+#   its error is about ±8 points, so it is only a rough signal.
 #
-# **Запуск:** GPU T4 x2, Internet On, затем **Save Version → Save & Run All (Commit)** —
-# прогон идёт ~2–2.5 часа, вкладку можно закрыть. Результаты — во вкладке Output → `results`.
+# **Run:** GPU T4 x2, Internet On, then **Save Version → Save & Run All (Commit)** —
+# takes ~2–2.5 hours, the tab can be closed. Results are in the Output tab → `results`.
 
 # %%
 import json
@@ -42,20 +44,20 @@ from huggingface_hub import HfApi
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 MODEL_ID = "allenai/OLMoE-1B-7B-0125"
-MODEL_DTYPE = torch.float16  # у T4 нет аппаратного bf16
+MODEL_DTYPE = torch.float16  # T4 has no hardware bf16
 WIKI_DATASET = "wikimedia/wikipedia"
 CALIBRATION_LANGUAGES = {"kk": "20231101.kk", "ru": "20231101.ru", "en": "20231101.en"}
 EVAL_DATASET = "facebook/belebele"
 EVAL_LANGUAGES = {"kk": "kaz_Cyrl", "ru": "rus_Cyrl", "en": "eng_Latn"}
 
-CALIBRATION_TOKENS = 100_000  # токенов Википедии на язык для выбора экспертов
+CALIBRATION_TOKENS = 100_000  # Wikipedia tokens per language used to choose experts
 MAX_TOKENS_PER_DOC = 512
 MIN_CHARS_PER_DOC = 500
 SHUFFLE_BUFFER = 10_000
-KEEP_COUNTS = (48, 38, 32, 24)  # сколько экспертов из 64 оставляем в каждом слое; 38 ≈ результат ноутбука 01
-RANDOM_SEEDS = (0, 1, 2, 3, 4)  # 5 независимых жеребьёвок на каждый K: виден разброс, а не одна удача
+KEEP_COUNTS = (48, 38, 32, 24)  # experts kept per layer (of 64); 38 ≈ the notebook 01 result
+RANDOM_SEEDS = (0, 1, 2, 3, 4)  # 5 independent draws per K: shows the spread, not one lucky draw
 METHODS = ("freq_kkru", "weighted_kkru", "freq_en", *(f"random_s{n}" for n in RANDOM_SEEDS))
-N_EVAL = 150  # текстов Belebele на язык (одни и те же отрывки во всех языках)
+N_EVAL = 150  # Belebele passages per language (the same passages in every language)
 SEED = 0
 
 KAGGLE_WORKING = Path("/kaggle/working")
@@ -63,7 +65,7 @@ OUTPUT_DIR = (KAGGLE_WORKING if KAGGLE_WORKING.exists() else Path(".")) / "resul
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 if not torch.cuda.is_available():
-    raise RuntimeError("GPU не найдена. На Kaggle включи Settings → Accelerator → GPU T4 x2.")
+    raise RuntimeError("No GPU found. On Kaggle, enable Settings → Accelerator → GPU T4 x2.")
 
 torch.manual_seed(SEED)
 VERSIONS = {
@@ -75,33 +77,33 @@ VERSIONS = {
 print(VERSIONS, f"| GPU x{torch.cuda.device_count()}")
 
 # %% [markdown]
-# ## 1. Загружаем модель
+# ## 1. Load the model
 #
-# Тот же OLMoE, что в ноутбуке 01. В каждом из 16 слоёв роутер выбирает 8 экспертов из 64.
+# The same OLMoE as in notebook 01. In each of the 16 layers the router picks 8 of 64 experts.
 
 # %%
 def load_model(model_id: str, revision: str):
-    """Грузим ровно ту версию весов, номер которой запишем в отчёт, и проверяем, что всё на GPU."""
+    """Load exactly the weight revision we record in the report, and check that it is all on GPU."""
     loaded = AutoModelForCausalLM.from_pretrained(model_id, revision=revision, dtype=MODEL_DTYPE, device_map="auto")
     if loaded.dtype != MODEL_DTYPE:
-        raise RuntimeError(f"Модель загрузилась в {loaded.dtype}, а нужен {MODEL_DTYPE}.")
+        raise RuntimeError(f"Model loaded as {loaded.dtype}, expected {MODEL_DTYPE}.")
     offloaded = {k: v for k, v in getattr(loaded, "hf_device_map", {}).items() if str(v) in ("cpu", "disk")}
     if offloaded:
-        raise RuntimeError(f"Часть модели не поместилась на GPU: {offloaded}")
+        raise RuntimeError(f"Part of the model did not fit on GPU: {offloaded}")
     return loaded
 
 
 def find_routers(model) -> list[torch.nn.Module]:
     routers = [m for name, m in model.named_modules() if name.endswith("mlp.gate")]
     if not routers:
-        raise RuntimeError("Не найдено ни одного роутера 'mlp.gate'.")
+        raise RuntimeError("No 'mlp.gate' routers found.")
     for router in routers:
         if not all(hasattr(router, a) for a in ("weight", "top_k", "norm_topk_prob")):
-            raise RuntimeError(f"Неизвестный тип роутера {type(router).__name__}: нужен transformers 5.x.")
+            raise RuntimeError(f"Unknown router type {type(router).__name__}: transformers 5.x is required.")
     return routers
 
 
-MODEL_REVISION = HfApi().model_info(MODEL_ID).sha  # фиксируем версию весов
+MODEL_REVISION = HfApi().model_info(MODEL_ID).sha  # pin the weight revision
 tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, revision=MODEL_REVISION)
 model = load_model(MODEL_ID, MODEL_REVISION)
 model.eval()
@@ -110,22 +112,23 @@ NUM_LAYERS = len(ROUTERS)
 NUM_EXPERTS = ROUTERS[0].weight.shape[0]
 TOP_K = ROUTERS[0].top_k
 INPUT_DEVICE = model.get_input_embeddings().weight.device
-print(f"Слоёв: {NUM_LAYERS}, экспертов: {NUM_EXPERTS}, активных: {TOP_K}, ревизия: {MODEL_REVISION}")
+print(f"Layers: {NUM_LAYERS}, experts: {NUM_EXPERTS}, active: {TOP_K}, revision: {MODEL_REVISION}")
 
 # %% [markdown]
-# ## 2. Как «уволить» эксперта, не трогая файлы модели
+# ## 2. How to remove an expert without touching the model files
 #
-# Роутер считает для каждого эксперта число-«оценку» и отдаёт токен 8 экспертам с лучшими оценками.
-# Мы перехватываем роутер и уволенным экспертам ставим оценку **минус бесконечность**:
-# их больше никогда не выберут, а веса оставшихся пересчитаются, как будто уволенных и не было.
-# Математически это **то же самое**, что физически удалить экспертов из модели —
-# только проще и обратимо (память мы сэкономим позже, когда метод докажет, что работает).
+# The router gives every expert a score and sends the token to the 8 experts with the best scores.
+# We intercept the router and give removed experts a score of **minus infinity**: they can never be
+# picked again, and the weights of the remaining experts are renormalized as if the removed ones
+# never existed. For the forward pass this is mathematically **the same** as physically deleting the
+# experts — just simpler and reversible. (It does not save memory yet; that comes once the method
+# has proven itself.)
 #
-# Тот же перехватчик в режиме «запись» считает, как часто и с каким весом выбирают каждого эксперта.
+# In "recording" mode the same hook counts how often, and with what weight, each expert is picked.
 
 # %%
 def masked_routing(router, logits: torch.Tensor, mask: torch.Tensor):
-    """Повторяет логику роутера OLMoE (transformers 5.x), но с маской уволенных экспертов."""
+    """Reproduces the OLMoE router logic (transformers 5.x), with a mask for removed experts."""
     masked_logits = logits + mask
     probs = torch.softmax(masked_logits, dtype=torch.float, dim=-1)
     top_value, top_index = torch.topk(probs, router.top_k, dim=-1)
@@ -135,7 +138,7 @@ def masked_routing(router, logits: torch.Tensor, mask: torch.Tensor):
 
 
 class RouterController:
-    """Перехватывает все роутеры: увольняет экспертов по маскам и (по желанию) ведёт статистику."""
+    """Intercepts every router: removes experts via masks and, optionally, records statistics."""
 
     def __init__(self, routers: list[torch.nn.Module]):
         self.masks: list[torch.Tensor | None] = [None] * len(routers)
@@ -150,7 +153,7 @@ class RouterController:
     def _make_hook(self, layer: int):
         def hook(router, _inputs, output):
             if not (isinstance(output, tuple) and len(output) == 3):
-                raise RuntimeError("Роутер вернул не (logits, scores, indices) — другая версия transformers.")
+                raise RuntimeError("Router did not return (logits, scores, indices) — different transformers version.")
             if self.masks[layer] is not None:
                 output = masked_routing(router, output[0], self.masks[layer])
             if self.recording:
@@ -160,14 +163,14 @@ class RouterController:
 
     def _record(self, layer: int, output) -> None:
         _, top_value, top_index = output
-        index = top_index[1:].reshape(-1)  # первый токен не считаем («сток внимания»)
+        index = top_index[1:].reshape(-1)  # skip the first token (attention sink)
         weight = top_value[1:].float().reshape(-1)
         self.counts[layer] += torch.bincount(index, minlength=NUM_EXPERTS).cpu().numpy()
         weighted = torch.zeros(NUM_EXPERTS, device=index.device).index_add_(0, index, weight)
         self.weighted[layer] += weighted.cpu().numpy()
 
     def set_kept(self, kept: np.ndarray | None) -> None:
-        """kept: [слои, K] — номера оставленных экспертов; None — вернуть всех."""
+        """kept: [layers, K] — indices of the kept experts; None restores all experts."""
         if kept is None:
             self.masks = [None] * NUM_LAYERS
             return
@@ -187,15 +190,15 @@ def build_mask(kept_layer: np.ndarray, router) -> torch.Tensor:
 controller = RouterController(ROUTERS)
 
 # %% [markdown]
-# ### Самопроверка увольнения (четыре проверки)
+# ### Removal self-tests (four checks)
 #
-# 1. Если «уволить» никого (маска из нулей), ответы модели должны совпасть с исходными.
-# 2. Если уволить половину, ответы должны измениться (иначе перехват не работает).
-# 3. Маска должна давать **ровно то же**, что настоящее удаление: берём роутер, физически
-#    вырезаем из него строки уволенных экспертов и сравниваем выбор и веса с нашей маской.
-# 4. В настоящем прогоне модели ни один слой не должен выбрать уволенного эксперта.
+# 1. Removing nobody (an all-zero mask) must leave the model's outputs unchanged.
+# 2. Removing half of the experts must change the outputs (otherwise the hook does nothing).
+# 3. The mask must give **exactly the same** result as real removal: we take the router, physically
+#    cut out the rows of removed experts, and compare the chosen experts and weights with our mask.
+# 4. In a real forward pass, no layer may pick a removed expert.
 #
-# Плюс защита от переполнения fp16: если где-то появится NaN, ноутбук остановится, а не выдаст мусор.
+# Plus an fp16 overflow guard: if a NaN appears anywhere, the notebook stops instead of producing garbage.
 
 # %%
 SELF_TEST_TEXTS = (
@@ -210,7 +213,7 @@ def model_logits(text: str) -> torch.Tensor:
     ids = tokenizer(text, return_tensors="pt").input_ids.to(INPUT_DEVICE)
     logits = model(ids, use_cache=False).logits.float()
     if not torch.isfinite(logits).all():
-        raise FloatingPointError("NaN/inf в выходе модели: fp16 переполнился.")
+        raise FloatingPointError("NaN/inf in model output: fp16 overflow.")
     return logits
 
 
@@ -227,12 +230,12 @@ def max_diff_vs_reference(kept: np.ndarray) -> float:
 
 @torch.inference_mode()
 def mask_vs_physical_removal(router, kept_layer: np.ndarray, num_tokens: int = 256) -> tuple[float, float]:
-    """Сравниваем маску с роутером, из которого уволенные эксперты вырезаны по-настоящему.
+    """Compare the mask with a router whose removed experts are actually cut out.
 
-    Оба варианта считаем из ОДНИХ и тех же оценок роутера: вырезать строки весов роутера —
-    то же самое, что взять только столбцы оставленных экспертов из его оценок. Так сравнение
-    не зависит от шума округления fp16 в разных умножениях матриц.
-    Возвращает (доля токенов с тем же выбором экспертов, макс. разница весов).
+    Both sides start from the SAME router scores: removing rows from the router weights is the same
+    as taking only the kept experts' columns of its scores. This keeps the comparison independent of
+    fp16 rounding noise between different matrix multiplications.
+    Returns (share of tokens with the same expert choice, max weight difference).
     """
     device, dtype = router.weight.device, router.weight.dtype
     hidden = torch.randn(num_tokens, router.weight.shape[1], device=device, dtype=dtype)
@@ -247,7 +250,7 @@ def mask_vs_physical_removal(router, kept_layer: np.ndarray, num_tokens: int = 2
     agreement = same_rows.float().mean().item()
     if not same_rows.any():
         return agreement, float("inf")
-    phys_w = phys_w.to(masked_w.dtype).float()  # обе стороны в одной точности, как в настоящем роутере
+    phys_w = phys_w.to(masked_w.dtype).float()  # both sides in the same precision, as in the real router
     weight_diff = (phys_w.sort(-1).values - masked_w.float().sort(-1).values).abs()[same_rows].max().item()
     return agreement, weight_diff
 
@@ -262,7 +265,7 @@ physical_ok = physical_agreement >= 0.999 and physical_weight_diff <= 1e-3
 
 
 def live_hook_respects_mask(kept: np.ndarray) -> bool:
-    """Прогоняем настоящий текст с маской и смотрим, кого роутеры реально выбрали в каждом слое."""
+    """Run real text with the mask and check which experts each layer's router actually picked."""
     controller.set_kept(kept)
     controller.reset_stats()
     controller.recording = True
@@ -280,27 +283,27 @@ def live_hook_respects_mask(kept: np.ndarray) -> bool:
 
 
 live_ok = live_hook_respects_mask(half)
-print(f"1) Никого не уволили: разница {diff_same:.4f} (должна быть ≈0)")
-print(f"2) Уволили половину:  разница {diff_changed:.2f} (должна быть заметно больше 0)")
-print(f"3) Маска = настоящее удаление: совпадение выбора {physical_agreement:.4f} (≥0.999), "
-      f"разница весов {physical_weight_diff:.2e} (≤1e-3) → {physical_ok}")
-print(f"4) В живом прогоне уволенных экспертов не выбрал ни один слой: {live_ok}")
-checks_passed = (diff_same <= 1e-2) and (diff_changed >= 1e-1) and physical_ok and live_ok  # NaN не пройдёт
+print(f"1) Nobody removed: max diff {diff_same:.4f} (should be ≈0)")
+print(f"2) Half removed:   max diff {diff_changed:.2f} (should be clearly above 0)")
+print(f"3) Mask = real removal: choice agreement {physical_agreement:.4f} (≥0.999), "
+      f"weight diff {physical_weight_diff:.2e} (≤1e-3) → {physical_ok}")
+print(f"4) Live run: no layer picked a removed expert: {live_ok}")
+checks_passed = (diff_same <= 1e-2) and (diff_changed >= 1e-1) and physical_ok and live_ok  # NaN fails this
 if not checks_passed:
-    raise RuntimeError("Самопроверка увольнения не прошла — результатам верить нельзя.")
+    raise RuntimeError("Removal self-test failed — the results cannot be trusted.")
 
 # %% [markdown]
-# ## 3. Калибровка: кого роутер зовёт на казахском, русском и английском
+# ## 3. Calibration: which experts the router uses for Kazakh, Russian and English
 #
-# Как в ноутбуке 01: прогоняем 100 тыс. токенов Википедии на каждом языке и считаем выборы.
-# Качество потом меряем на **других** текстах (Belebele) — иначе проверка была бы нечестной.
+# As in notebook 01: run 100k Wikipedia tokens per language and count the picks.
+# Quality is then measured on **different** texts (Belebele) — otherwise the test would not be fair.
 
 # %%
 def iter_wiki_texts(wiki_config: str):
     try:
         stream = load_dataset(WIKI_DATASET, wiki_config, split="train", streaming=True)
     except Exception as error:
-        raise RuntimeError(f"Не удалось открыть {WIKI_DATASET}/{wiki_config}. Internet включён?") from error
+        raise RuntimeError(f"Could not open {WIKI_DATASET}/{wiki_config}. Is Internet enabled?") from error
     for row in stream.shuffle(seed=SEED, buffer_size=SHUFFLE_BUFFER):
         text = row["text"].strip()
         if len(text) >= MIN_CHARS_PER_DOC:
@@ -330,13 +333,13 @@ calibration = {}
 for lang, wiki_config in CALIBRATION_LANGUAGES.items():
     started = time.time()
     calibration = {**calibration, lang: calibrate(wiki_config)}
-    print(f"калибровка {lang}: {time.time() - started:.0f} с")
+    print(f"calibration {lang}: {time.time() - started:.0f} s")
 
 # %% [markdown]
-# ## 4. Четыре способа выбрать, кого оставить
+# ## 4. Four ways to choose who stays
 #
-# Для каждого способа у каждого эксперта в каждом слое есть «оценка полезности».
-# Оставляем K экспертов с лучшими оценками — одинаковое K для всех способов, чтобы сравнение было честным.
+# Each method gives every expert in every layer a "usefulness score".
+# We keep the K experts with the best scores — the same K for every method, so the comparison is fair.
 
 # %%
 def row_share(x: np.ndarray) -> np.ndarray:
@@ -353,7 +356,7 @@ def build_scores() -> dict[str, np.ndarray]:
 
 
 def random_score(seed_index: int, keep: int) -> np.ndarray:
-    """Своя жеребьёвка для каждой пары (номер, K), чтобы наборы разных K не были вложены друг в друга."""
+    """A separate draw for every (seed, K) pair, so sets for different K are not nested in each other."""
     return np.random.default_rng([SEED, 100 + seed_index, keep]).random((NUM_LAYERS, NUM_EXPERTS))
 
 
@@ -370,14 +373,14 @@ def top_experts(score: np.ndarray, keep: int) -> np.ndarray:
 SCORES = build_scores()
 overlap = np.mean([len(np.intersect1d(a, b)) for a, b in zip(top_experts(SCORES["freq_kkru"], 38),
                                                                 top_experts(SCORES["freq_en"], 38))])
-print(f"При K=38 наборы 'kk+ru' и 'en' совпадают в среднем на {overlap:.1f} эксперта из 38")
+print(f"At K=38 the 'kk+ru' and 'en' sets share {overlap:.1f} of 38 experts on average")
 
 # %% [markdown]
-# ## 5. Экзамен: Belebele
+# ## 5. The exam: Belebele
 #
-# Берём одни и те же 150 отрывков на трёх языках. Для каждого:
-# - считаем перплексию на самом отрывке;
-# - задаём вопрос с 4 вариантами и смотрим, какой букве (A/B/C/D) модель даёт больше вероятности.
+# We take the same 150 passages in three languages. For each one we:
+# - compute perplexity on the passage itself;
+# - ask a 4-option question and check which letter (A/B/C/D) the model gives the highest probability.
 
 # %%
 ANSWER_LETTERS = (" A", " B", " C", " D")
@@ -385,13 +388,13 @@ ANSWER_LETTERS = (" A", " B", " C", " D")
 
 def load_eval_rows() -> dict[str, pd.DataFrame]:
     frames = {lang: load_dataset(EVAL_DATASET, cfg, split="test").to_pandas() for lang, cfg in EVAL_LANGUAGES.items()}
-    keys = frames["en"].drop_duplicates("link")[["link", "question_number"]]  # один вопрос на отрывок
+    keys = frames["en"].drop_duplicates("link")[["link", "question_number"]]  # one question per passage
     keys = keys.sample(n=min(N_EVAL, len(keys)), random_state=SEED)
     rows = {lang: keys.merge(df, on=["link", "question_number"], how="left", validate="one_to_one")
             for lang, df in frames.items()}
     missing = {lang: int(df.isna().any(axis=1).sum()) for lang, df in rows.items()}
     if any(missing.values()):
-        raise RuntimeError(f"В Belebele не нашлись пары для некоторых вопросов: {missing}")
+        raise RuntimeError(f"Some Belebele questions have no counterpart in every language: {missing}")
     return rows
 
 
@@ -400,21 +403,21 @@ def encode(text: str) -> list[int]:
 
 
 def token_span(offsets: list[tuple[int, int]], char_start: int, char_end: int) -> tuple[int, int]:
-    """Номера токенов, которые покрывают символы [char_start, char_end) текста."""
+    """Indices of the tokens covering characters [char_start, char_end) of the text."""
     first = next(i for i, (_, end) in enumerate(offsets) if end > char_start)
     last = next((i for i, (start, _) in enumerate(offsets) if start >= char_end), len(offsets))
     return first, last
 
 
 def build_example(row) -> dict:
-    """Кодируем весь промпт одной строкой — так токены на стыках такие же, как в обычном тексте."""
+    """Encode the whole prompt as one string, so tokens at the boundaries match normal text."""
     prefix, passage = "Passage: ", row["flores_passage"].strip()
     options = "".join(f"\n{letter.strip()}. {row[f'mc_answer{i + 1}']}" for i, letter in enumerate(ANSWER_LETTERS))
     text = f"{prefix}{passage}\nQuestion: {row['question'].strip()}{options}\nAnswer:"
     encoded = tokenizer(text, add_special_tokens=False, return_offsets_mapping=True)
     start, end = token_span(encoded["offset_mapping"], len(prefix), len(prefix) + len(passage))
     if start < 1 or end <= start:
-        raise RuntimeError("Не удалось найти отрывок среди токенов.")
+        raise RuntimeError("Could not locate the passage among the tokens.")
     return {
         "ids": torch.tensor([encoded["input_ids"]]),
         "passage_span": (start, end),
@@ -424,12 +427,12 @@ def build_example(row) -> dict:
 
 ANSWER_IDS = [encode(letter) for letter in ANSWER_LETTERS]
 if any(len(ids) != 1 for ids in ANSWER_IDS):
-    raise RuntimeError("Буквы ответов должны быть одним токеном каждая.")
+    raise RuntimeError("Each answer letter must be a single token.")
 ANSWER_IDS = [ids[0] for ids in ANSWER_IDS]
 
 EVAL_ROWS = load_eval_rows()
 EXAMPLES = {lang: [build_example(row) for _, row in df.iterrows()] for lang, df in EVAL_ROWS.items()}
-print({lang: len(ex) for lang, ex in EXAMPLES.items()}, "примеров на язык")
+print({lang: len(ex) for lang, ex in EXAMPLES.items()}, "examples per language")
 
 # %%
 @torch.inference_mode()
@@ -440,7 +443,7 @@ def evaluate_language(examples: list[dict]) -> dict[str, float]:
         ids = ex["ids"].to(INPUT_DEVICE)
         logits = model(ids, use_cache=False).logits[0]
         if not torch.isfinite(logits).all():
-            raise FloatingPointError("NaN/inf в выходе модели: fp16 переполнился.")
+            raise FloatingPointError("NaN/inf in model output: fp16 overflow.")
         start, end = ex["passage_span"]
         log_probs = torch.log_softmax(logits[start - 1:end - 1].float(), dim=-1)
         targets = ids[0, start:end].to(log_probs.device)
@@ -452,15 +455,15 @@ def evaluate_language(examples: list[dict]) -> dict[str, float]:
     return {
         "perplexity": float(np.exp(total_nll / total_tokens)),
         "accuracy": correct / len(examples),
-        "picked_ABCD": "/".join(str(n) for n in picked),  # если модель всегда жмёт одну букву — это видно
+        "picked_ABCD": "/".join(str(n) for n in picked),  # shows if the model always presses one letter
     }
 
 # %% [markdown]
-# ## 6. Главный прогон
+# ## 6. Main run
 #
-# Сначала исходная модель (все 64 эксперта), затем 4 способа × 4 размера команды = 16 вариантов.
-# После каждого варианта результаты дописываются в `results/results.csv` —
-# если сессия оборвётся, сделанное не пропадёт.
+# First the original model (all 64 experts), then every method × 4 team sizes.
+# After each configuration the results are appended to `results/results.csv` —
+# if the session dies, finished work is not lost.
 
 # %%
 def run_config(method: str, keep: int) -> list[dict]:
@@ -481,35 +484,35 @@ for number, (method, keep) in enumerate(configs, start=1):
     results = [*results, *run_config(method, keep)]
     pd.DataFrame(results).to_csv(OUTPUT_DIR / "results.csv", index=False)
     took = time.time() - started
-    print(f"[{number}/{len(configs)}] {method:>14} K={keep:<2} | {took:.0f} с | "
-          f"осталось ~{took * (len(configs) - number) / 60:.0f} мин")
+    print(f"[{number}/{len(configs)}] {method:>14} K={keep:<2} | {took:.0f} s | "
+          f"~{took * (len(configs) - number) / 60:.0f} min left")
 
 # %% [markdown]
-# ## 7. Результаты
+# ## 7. Results
 #
-# **Как читать таблицу:** число — во сколько раз выросла перплексия по сравнению с исходной моделью.
-# `1.00` = ничего не потеряли, `1.20` = модель «удивляется» тексту на 20% больше.
+# **How to read the table:** each number is how many times perplexity grew compared with the
+# original model. `1.00` = nothing lost, `1.20` = the model is 20% more "surprised" by the text.
 
 # %%
 df = pd.DataFrame(results)
 if df.duplicated(["method", "keep", "lang"]).any():
-    raise RuntimeError("Дубликаты в результатах — таблицы были бы усреднены молча.")
+    raise RuntimeError("Duplicate rows in results — tables would be averaged silently.")
 base = df[df.method == "base"].set_index("lang")
 if not np.isfinite(base.perplexity).all():
-    raise RuntimeError("Перплексия исходной модели не число — что-то сломалось.")
+    raise RuntimeError("Original model perplexity is not a number — something broke.")
 df["ppl_ratio"] = df.apply(lambda r: r.perplexity / base.loc[r.lang, "perplexity"], axis=1)
-print("Исходная модель:")
+print("Original model:")
 print(base[["perplexity", "accuracy", "picked_ABCD"]].round(3))
 df["family"] = df.method.str.replace(r"_s\d+$", "", regex=True)  # random_s0/1/2 → random
 random_part = df[df.family == "random"]
 spread = random_part.groupby(["keep", "lang"]).ppl_ratio.agg(["min", "max"]).unstack("lang")
-print("\nРазброс случайного выбора (min–max по 5 жеребьёвкам):")
+print("\nSpread of random selection (min–max over 5 draws):")
 print(spread.round(3))
 ratio_table = df[df.method != "base"].pivot_table(index=["keep", "method"], columns="lang", values="ppl_ratio")
-print("\nРост перплексии (меньше = лучше):")
+print("\nPerplexity growth (lower = better):")
 print(ratio_table[["kk", "ru", "en"]].round(3))
 accuracy_table = df[df.method != "base"].pivot_table(index=["keep", "method"], columns="lang", values="accuracy")
-print("\nТочность на вопросах (угадывание = 0.25):")
+print("\nQuestion accuracy (chance = 0.25):")
 print(accuracy_table[["kk", "ru", "en"]].round(3))
 
 # %%
@@ -522,24 +525,24 @@ for ax, lang in zip(axes, ("kk", "ru", "en")):
                 alpha=0.5 if is_random else 1.0, label="random (×5)" if method == "random_s0" else
                 (None if is_random else method))
     ax.axhline(1.0, color="gray", ls="--", lw=0.8)
-    ax.set_title(f"{lang}: рост перплексии")
-    ax.set_xlabel("оставлено экспертов из 64")
+    ax.set_title(f"{lang}: perplexity growth")
+    ax.set_xlabel("experts kept (of 64)")
     ax.invert_xaxis()
-axes[0].set_ylabel("перплексия / исходная")
+axes[0].set_ylabel("perplexity / original")
 axes[0].legend()
 fig.savefig(OUTPUT_DIR / "perplexity_vs_experts.png", dpi=150, bbox_inches="tight")
 plt.show()
 
 # %% [markdown]
-# ## 8. Сохраняем
+# ## 8. Save
 #
-# **Что мы надеемся увидеть:** на kk и ru линии `freq_kkru`/`weighted_kkru` заметно ниже, чем `random`
-# и `freq_en`. На en — наоборот (английским мы жертвуем сознательно).
-# **Если `freq_kkru` попадает в серый «коридор» случайных** — частота выбора не годится как критерий
-# (гипотеза: тогда поможет REAP, который учитывает ещё и силу вклада эксперта).
+# **What we hope to see:** for kk and ru, the `freq_kkru`/`weighted_kkru` lines are clearly below
+# `random` and `freq_en`. For en it is the opposite (we sacrifice English on purpose).
+# **If `freq_kkru` falls inside the gray "corridor" of random draws**, selection frequency is not a
+# good criterion (hypothesis: REAP, which also accounts for each expert's contribution, would help).
 #
-# **Ограничения:** калибровка на Википедии, проверка на Belebele — разные тексты (это честно, но домены
-# различаются); K одинаковое во всех слоях, хотя слои используют экспертов по-разному.
+# **Limitations:** calibration on Wikipedia, evaluation on Belebele — different texts (fair, but the
+# domains differ); K is the same in every layer, although layers use experts differently.
 
 # %%
 controller.remove()
@@ -562,4 +565,4 @@ summary = {
 (OUTPUT_DIR / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2))
 np.savez_compressed(OUTPUT_DIR / "calibration.npz",
                     **{f"{lang}_{k}": v for lang, stats in calibration.items() for k, v in stats.items()})
-print("Готово:", sorted(p.name for p in OUTPUT_DIR.iterdir()))
+print("Done:", sorted(p.name for p in OUTPUT_DIR.iterdir()))
