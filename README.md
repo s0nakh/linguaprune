@@ -113,6 +113,22 @@ Raw numbers: [`experiments/02/`](experiments/02/).
 
 Raw numbers: [`experiments/03/summary.json`](experiments/03/summary.json).
 
+**Notebook 04 — keep every expert, give it bits by kk+ru traffic (simulated quantization).** The target was fixed before the run: ≥3.5× smaller than fp16, with kk/ru perplexity growing by at most 2%. **No configuration met it.** Perplexity growth vs. fp16 (memory is analytic):
+
+| Configuration | kk | ru | Memory |
+|---|---|---|---|
+| uniform 4-bit | +6.4% | +4.5% | 4.38 GB (3.2×) |
+| **kk+ru 4/3-bit** | **+8.8%** | **+6.8%** | 3.83 GB (3.6×) |
+| English 4/3-bit (same memory) | +16.5% | +13.6% | 3.83 GB |
+| **kk+ru 4/3/2-bit** | **+13%** | **+17%** | 3.30 GB (4.2×) |
+| English 4/3/2-bit (same memory) | +217% | +289% | 3.30 GB |
+| random 4/3/2-bit (3 draws) | +126…404% | +130…420% | 3.30 GB |
+
+- **Language-aware bit allocation works.** At equal memory, kk+ru allocation halves the loss compared with English allocation at 4/3 bits, and cuts it ~15–20× at 4/3/2 bits.
+- **The quantizer is the bottleneck.** Plain round-to-nearest loses +6% on Kazakh even at uniform 4 bits, and the 3-bit variants turn "Astana" into "Almaty". Next: GPTQ calibrated on kk+ru text, with 8-bit attention/embeddings.
+
+Raw numbers: [`experiments/04/`](experiments/04/).
+
 ## How it works
 
 ```
@@ -150,8 +166,10 @@ Notebooks are bilingual: English first, Russian translation below each text cell
 - [x] 01 · Router profiling on OLMoE
 - [x] 02 · Quality after pruning (Belebele kk/ru/en)
 - [x] 03 · Physically remove experts, save the smaller model, verify it matches the masked results
-- [ ] 04 · 4-bit GGUF export and a run on an 8 GB laptop
-- [ ] 05 · Same pipeline on Qwen3-30B-A3B
+- [x] 04 · Language-aware mixed-precision allocation (simulated RTN): works vs. English/random, target not met
+- [ ] 05 · GPTQ calibrated on kk+ru for experts + 8-bit attention, same target
+- [ ] 06 · Real low-bit file format and a run on an 8 GB laptop
+- [ ] 07 · Same pipeline on Qwen3-30B-A3B
 - [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
 - [ ] Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
 - [ ] Larger MoE models for Kazakh/Russian
