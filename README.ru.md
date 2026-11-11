@@ -8,6 +8,7 @@
 
 <p>
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
+<a href="https://github.com/s0nakh/linguaprune/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguaprune/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
 <a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
 <a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#дорожная-карта"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
@@ -85,7 +86,8 @@
 
 ⚠️ **Ограничения:**
 - Точность ответов на Belebele даже у *исходной* модели для kk/ru близка к угадыванию: 31% и 40% при 25% случайных, и модель сильно тяготеет к ответу «C». Поэтому точность ущерб не измеряет, надёжный сигнал здесь — перплексия.
-- Перплексия ≠ качество на прикладных задачах.
+- Перплексия ≠ качество на прикладных задачах: «+10% перплексии» **не** значит «ответы на 10% хуже».
+- Исходная OLMoE изначально слабо знает казахский, поэтому мы сохранили *слабый* исходный уровень, а не сильный. Дальше — более сильные многоязычные MoE-модели.
 - Это одна небольшая модель, и маска пока не экономит память.
 
 Сырые цифры: [`experiments/02/`](experiments/02/).
@@ -96,6 +98,7 @@
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Каких экспертов использует каждый язык; сколько можно убрать | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
 | 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Убрать экспертов и измерить качество на kk/ru/en в сравнении со случайными и «английскими» экспертами | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
+| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Физически удалить экспертов, проверить, что уменьшенная модель совпадает с имитацией, сохранить и загрузить заново | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
 
 Ноутбуки двуязычные: в каждом текстовом блоке сначала английский, ниже русский перевод.
 
@@ -108,14 +111,34 @@
 
 - [x] 01 · Профилирование роутера на OLMoE
 - [x] 02 · Качество после прунинга (Belebele kk/ru/en)
-- [ ] 03 · Физически удалить экспертов, сохранить меньшую модель, проверить совпадение с замером, затем 4 бита
-- [ ] 04 · Тот же пайплайн на Qwen3-30B-A3B
+- [ ] 03 · Физически удалить экспертов, сохранить меньшую модель, проверить совпадение с замером *(ноутбук готов)*
+- [ ] 04 · Экспорт в GGUF 4 бита и запуск на ноутбуке с 8 ГБ
+- [ ] 05 · Тот же пайплайн на Qwen3-30B-A3B
 - [ ] Критерий в духе REAP и бюджет по слоям
 - [ ] Прунинг + 4 бита против равномерных 2–3 бит **при одинаковой памяти**
 - [ ] Большие MoE-модели для казахского/русского
 - [ ] CLI `pip install linguaprune` для любого языка
 
 **Проверка на опровержение.** При одинаковой памяти «прунинг + 4 бита» должен обойти равномерную квантизацию и меньшую dense-модель по качеству на kk/ru. Если не обойдёт, мы опубликуем и этот результат.
+
+## Python-пакет
+
+Код прунинга, которым пользуются ноутбуки, вынесен в небольшой протестированный пакет:
+
+```bash
+pip install "git+https://github.com/s0nakh/linguaprune@v0.1.0"
+```
+
+```python
+from linguaprune import language_frequency_score, top_experts, masked_experts, prune_experts
+
+kept = top_experts(language_frequency_score(router_counts, ["kk", "ru"]), keep=38)
+with masked_experts(model, kept):   # имитация: уволенных экспертов нельзя выбрать
+    ...
+prune_experts(model, kept)           # удалить по-настоящему; затем model.save_pretrained(...)
+```
+
+Тесты проверяют, что физическое удаление даёт ровно те же выходы, что маска. Для этого используется копия MoE-классов OLMoE из `transformers` 5.x: `pip install -e ".[test]" && pytest`.
 
 ## Лицензия
 

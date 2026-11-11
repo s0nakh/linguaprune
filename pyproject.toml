@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linguaprune"
+version = "0.1.0"
+description = "Language-aware expert pruning for Mixture-of-Experts LLMs"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [{ name = "Sophia Akhmetova" }]
+dependencies = ["numpy", "torch"]
+
+[project.optional-dependencies]
+eval = ["datasets", "pandas", "transformers>=5"]
+test = ["pytest", "transformers>=5"]
+
+[project.urls]
+Homepage = "https://github.com/s0nakh/linguaprune"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

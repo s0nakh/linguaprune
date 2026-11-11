@@ -8,6 +8,7 @@ First target: Kazakh 🇰🇿 + Russian.
 
 <p>
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
+<a href="https://github.com/s0nakh/linguaprune/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguaprune/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
 <a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
 <a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
@@ -87,7 +88,8 @@ Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
 
 ⚠️ **Limitations:**
 - Belebele multiple-choice accuracy of the *unpruned* model is near chance for kk/ru: 31% and 40% vs. 25% chance, with a strong bias toward answer "C". So accuracy cannot measure the damage here, and perplexity is the reliable signal.
-- Perplexity is not the same as downstream task quality.
+- Perplexity is not the same as downstream task quality: "+10% perplexity" does **not** mean "10% worse answers".
+- The original OLMoE is weak in Kazakh to begin with, so we preserved a *weak* baseline, not a strong one. Stronger multilingual MoE models come next.
 - This is one small model, and the mask does not yet save memory.
 
 Raw numbers: [`experiments/02/`](experiments/02/).
@@ -113,6 +115,7 @@ The notebook verifies this with built-in self-tests before measuring anything.
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts each language uses; how many could be removed | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
 | 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Remove experts and measure quality on kk/ru/en against random and English baselines | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
+| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Physically delete the experts, verify the smaller model matches the simulation, save and reload it | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
 
 Notebooks are bilingual: English first, Russian translation below each text cell.
 
@@ -126,14 +129,34 @@ Notebooks are bilingual: English first, Russian translation below each text cell
 
 - [x] 01 · Router profiling on OLMoE
 - [x] 02 · Quality after pruning (Belebele kk/ru/en)
-- [ ] 03 · Physically remove experts, save the smaller model, verify it matches the masked results, then 4-bit
-- [ ] 04 · Same pipeline on Qwen3-30B-A3B
+- [ ] 03 · Physically remove experts, save the smaller model, verify it matches the masked results *(notebook ready)*
+- [ ] 04 · 4-bit GGUF export and a run on an 8 GB laptop
+- [ ] 05 · Same pipeline on Qwen3-30B-A3B
 - [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
 - [ ] Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
 - [ ] Larger MoE models for Kazakh/Russian
 - [ ] `pip install linguaprune` CLI: profile → prune → export, for any language
 
 **Our falsification test:** at equal memory, pruning + 4-bit must beat both uniform low-bit quantization and a smaller dense model on kk/ru quality. If it doesn't, we will publish that result.
+
+## Python package
+
+The pruning code used by the notebooks is a small, tested package:
+
+```bash
+pip install "git+https://github.com/s0nakh/linguaprune@v0.1.0"
+```
+
+```python
+from linguaprune import language_frequency_score, top_experts, masked_experts, prune_experts
+
+kept = top_experts(language_frequency_score(router_counts, ["kk", "ru"]), keep=38)
+with masked_experts(model, kept):   # simulate: dropped experts can't be picked
+    ...
+prune_experts(model, kept)           # delete them for real; then model.save_pretrained(...)
+```
+
+Tests check that physical removal gives exactly the same outputs as the mask, using a copy of the OLMoE MoE classes from `transformers` 5.x: `pip install -e ".[test]" && pytest`.
 
 ## Development
 
