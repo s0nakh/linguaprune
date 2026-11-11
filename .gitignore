@@ -1,0 +1,13 @@
+results/
+__pycache__/
+.ipynb_checkpoints/
+.DS_Store
+.env
+*.safetensors
+*.pt
+*.bin
+*.gguf
+checkpoints/
+.env.*
+.venv/
+venv/
