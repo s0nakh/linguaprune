@@ -1,6 +1,6 @@
 {
   "model": "allenai/OLMoE-1B-7B-0125",
-  "model_revision": null,
+  "model_revision": "9b0c1aa87e34a20052389dce1f0cf01da783f654",
   "dtype": "torch.float16",
   "versions": {
     "python": "3.13.16",

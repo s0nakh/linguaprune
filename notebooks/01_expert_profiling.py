@@ -394,7 +394,7 @@ ax.axhline(NUM_EXPERTS, color="gray", lw=0.8)
 ax.set_title(f"Сколько экспертов нужно для {COVERAGE_TARGET:.0%} выборов роутера")
 ax.set_xlabel("слой")
 ax.set_ylabel("экспертов")
-ax.legend()
+ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1))  # легенда справа, не закрывает линии
 fig.savefig(OUTPUT_DIR / "experts_needed_per_layer.png", dpi=150, bbox_inches="tight")
 plt.show()
 

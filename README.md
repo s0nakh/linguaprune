@@ -45,6 +45,11 @@ LinguaPrune measures **which experts a language really needs** and removes the r
 - On **held-out articles**, the chosen experts still cover 96% (kk) and 91% (ru) of router picks.
 - ⚠️ This measures how often experts are *chosen*, **not** model quality. Notebook 02 measures quality.
 
+<img src="experiments/01/experts_needed_per_layer.png" alt="Experts needed per layer" width="720">
+
+- **Deep layers need far fewer experts.** In layer 14, Kazakh needs only 12 of 64, while early layers need ~40. This motivates per-layer pruning budgets.
+- **Reproducible:** two independent Kaggle runs gave identical numbers and identical per-layer expert sets (model revision `9b0c1aa`).
+
 Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
 
 ## How it works
