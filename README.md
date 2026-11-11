@@ -25,6 +25,9 @@ Sovereign and multilingual MoE models are huge. A 247B-parameter MoE, for exampl
 But a model serving Kazakh and Russian users rarely calls many of its experts.
 LinguaPrune measures **which experts a language really needs** and removes the rest, so the model fits on fewer GPUs.
 
+> **Status (Nov 2026):** we have *measured* what removing experts does to quality — removal is simulated with a router mask.
+> The model itself is **not smaller yet**: physically deleting the weights, exporting and 4-bit quantization are the next step.
+
 > We present this as an **empirical study and an open tool**, not as a brand-new method.
 > Expert pruning (e.g. REAP) and language-specific pruning already exist; see [related work](docs/prior-art.md).
 > Our contribution is Kazakh + Russian: measured, reproducible and honest about quality loss.
@@ -109,7 +112,8 @@ The notebook verifies this with built-in self-tests before measuring anything.
 
 - [x] 01 · Router profiling on OLMoE
 - [x] 02 · Quality after pruning (Belebele kk/ru/en)
-- [ ] 03 · Same pipeline on Qwen3-30B-A3B
+- [ ] 03 · Physically remove experts, save the smaller model, verify it matches the masked results, then 4-bit
+- [ ] 04 · Same pipeline on Qwen3-30B-A3B
 - [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
 - [ ] Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
 - [ ] Larger MoE models for Kazakh/Russian
