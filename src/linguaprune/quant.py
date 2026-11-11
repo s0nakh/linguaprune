@@ -43,7 +43,7 @@ def fake_quantize(weight: torch.Tensor, bits: int, group_size: int = 128) -> tor
 
 def snapshot_experts(model: nn.Module) -> list[tuple[torch.Tensor, torch.Tensor]]:
     """CPU copies of every layer's expert weights, so the original can be restored between runs."""
-    return [(b.experts.gate_up_proj.detach().cpu().clone(), b.experts.down_proj.detach().cpu().clone())
+    return [(b.experts.gate_up_proj.detach().to("cpu", copy=True), b.experts.down_proj.detach().to("cpu", copy=True))
             for b in find_moe_blocks(model)]
 
 

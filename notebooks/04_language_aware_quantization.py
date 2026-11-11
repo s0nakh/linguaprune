@@ -18,6 +18,8 @@
 #
 # Quantization is simulated (weights are rounded to the low-bit grid and kept in fp16), which measures
 # quality exactly; the memory column is what a real low-bit format needs, including scales.
+# Not measured here: speed, and a real file on disk (GGUF stores all experts of a layer at one
+# precision, so per-expert bit-widths need their own format — a later step).
 #
 # **Run:** GPU T4 x2, Internet On, **Save Version → Save & Run All (Commit)** (~45 min).
 #
@@ -38,6 +40,8 @@
 #
 # Квантование имитируется (веса округляются до сетки низкой точности и хранятся в fp16): так качество
 # меряется точно, а столбец памяти показывает, сколько займёт настоящий низкобитный формат вместе с масштабами.
+# Здесь не измеряются: скорость и настоящий файл на диске (GGUF хранит всех экспертов слоя в одной
+# точности, поэтому для разной точности у экспертов нужен свой формат — это следующий шаг).
 #
 # **Запуск:** GPU T4 x2, Internet On, **Save Version → Save & Run All (Commit)** (~45 мин).
 
@@ -249,11 +253,19 @@ def run_config(name: str, quant_bits, memory_bits, kept) -> tuple[list[dict], di
             rows = [*rows, {"config": name, "lang": lang, "memory_gb": gb, **metrics}]
         return generate_answers(model)
 
-    if kept is None:
-        answers = measure()
-    else:
-        with masked_experts(model, kept):
+    try:
+        if kept is None:
             answers = measure()
+        else:
+            with masked_experts(model, kept):
+                answers = measure()
+    except FloatingPointError as error:  # e.g. 2-bit overflows fp16: record it and keep going
+        print(f"  {name}: {error} — recorded as NaN, continuing with the next configuration")
+        measured = {r["lang"] for r in rows}
+        rows = [*rows, *({"config": name, "lang": lang, "memory_gb": gb, "perplexity": float("nan"),
+                          "accuracy": float("nan"), "picked_ABCD": "", "error": str(error)}
+                         for lang in EXAMPLES if lang not in measured)]
+        answers = {key: "<non-finite output>" for key in PROMPTS}
     return rows, answers
 
 
@@ -282,7 +294,8 @@ table = df.pivot_table(index="config", columns="lang", values="ppl_growth").rein
 table["memory_gb"] = df.groupby("config").memory_gb.first().reindex(list(CONFIGS))
 table["compression"] = FP16_TOTAL_BYTES / 1e9 / table["memory_gb"]
 table["meets_target"] = ((table["compression"] >= TARGET_COMPRESSION)
-                         & (table["kk"] <= TARGET_MAX_PPL_GROWTH) & (table["ru"] <= TARGET_MAX_PPL_GROWTH))
+                         & (table["kk"] <= TARGET_MAX_PPL_GROWTH)
+                         & (table["ru"] <= TARGET_MAX_PPL_GROWTH)).astype(bool)  # NaN rows fail
 pd.set_option("display.width", 200)
 print("Perplexity growth vs. fp16 (0.02 = +2%), memory and compression:")
 print(table[["kk", "ru", "en", "memory_gb", "compression", "meets_target"]].round(3))
@@ -317,5 +330,20 @@ summary = {
     "answers": answers,
     "target_met_by": winners,
 }
-(OUTPUT_DIR / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2, default=float))
+def to_json(value):
+    """Strict JSON: numpy scalars → Python, NaN → null."""
+    if isinstance(value, dict):
+        return {k: to_json(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [to_json(v) for v in value]
+    if isinstance(value, (np.bool_, bool)):
+        return bool(value)
+    if isinstance(value, (np.integer,)):
+        return int(value)
+    if isinstance(value, (np.floating, float)):
+        return None if np.isnan(value) else float(value)
+    return value
+
+
+(OUTPUT_DIR / "summary.json").write_text(json.dumps(to_json(summary), ensure_ascii=False, indent=2, allow_nan=False))
 print("Done:", sorted(p.name for p in OUTPUT_DIR.iterdir()))
