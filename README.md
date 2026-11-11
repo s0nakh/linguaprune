@@ -163,17 +163,20 @@ Notebooks are bilingual: English first, Russian translation below each text cell
 
 ## Roadmap
 
-- [x] 01 · Router profiling on OLMoE
-- [x] 02 · Quality after pruning (Belebele kk/ru/en)
-- [x] 03 · Physically remove experts, save the smaller model, verify it matches the masked results
-- [x] 04 · Language-aware mixed-precision allocation (simulated RTN): works vs. English/random, target not met
-- [ ] 05 · GPTQ calibrated on kk+ru for experts + 8-bit attention, same target
-- [ ] 06 · Real low-bit file format and a run on an 8 GB laptop
-- [ ] 07 · Same pipeline on Qwen3-30B-A3B
-- [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
-- [ ] Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
-- [ ] Larger MoE models for Kazakh/Russian
-- [ ] `pip install linguaprune` CLI: profile → prune → export, for any language
+✅ done · 🔥 in progress · ⬜ planned
+
+- ✅ 01 · Router profiling on OLMoE
+- ✅ 02 · Quality after pruning (Belebele kk/ru/en)
+- ✅ 03 · Physically remove experts, save the smaller model, verify it matches the masked results
+- ✅ 04 · Language-aware mixed-precision allocation (simulated RTN): works vs. English/random, target not met
+- 🔥 **05 · GPTQ calibrated on kk+ru for experts + 8-bit attention, same target** — *in progress*
+- ⬜ 06 · Real low-bit file format and a run on an 8 GB laptop
+- ⬜ 07 · Same pipeline on Qwen3-30B-A3B
+- ⬜ 08 · Full benchmark (KazMMLU, Belebele accuracy, MERA) on a model that is strong in Kazakh
+- ⬜ REAP-style importance (gate × expert output norm) and per-layer budgets
+- ⬜ Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
+- ⬜ Larger MoE models for Kazakh/Russian
+- ⬜ `pip install linguaprune` CLI: profile → prune → export, for any language
 
 **Our falsification test:** at equal memory, pruning + 4-bit must beat both uniform low-bit quantization and a smaller dense model on kk/ru quality. If it doesn't, we will publish that result.
 
