@@ -1,5 +1,9 @@
 # %% [markdown]
+# ![LinguaPrune](https://raw.githubusercontent.com/s0nakh/linguaprune/main/assets/banner.png)
+#
 # # 02 · «Увольняем» экспертов и проверяем, не поглупела ли модель
+#
+# **Автор:** София Ахметова (Sophia Akhmetova, [@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
 # *[English version](https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) · часть проекта [LinguaPrune](https://github.com/s0nakh/linguaprune)*
 #
@@ -524,6 +528,7 @@ for ax, lang in zip(axes, ("kk", "ru", "en")):
                 alpha=0.5 if is_random else 1.0, label="random (×5)" if method == "random_s0" else
                 (None if is_random else method))
     ax.axhline(1.0, color="gray", ls="--", lw=0.8)
+    ax.set_yscale("log")  # логарифмическая шкала: случайное увольнение может увеличить перплексию в тысячи раз
     ax.set_title(f"{lang}: рост перплексии")
     ax.set_xlabel("оставлено экспертов из 64")
     ax.invert_xaxis()

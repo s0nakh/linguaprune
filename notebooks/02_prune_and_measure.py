@@ -1,5 +1,9 @@
 # %% [markdown]
+# ![LinguaPrune](https://raw.githubusercontent.com/s0nakh/linguaprune/main/assets/banner.png)
+#
 # # 02 · Remove experts and check whether the model got worse
+#
+# **Author:** Sophia Akhmetova ([@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
 # *[Русская версия](https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/02_prune_and_measure.ipynb) · part of [LinguaPrune](https://github.com/s0nakh/linguaprune)*
 #
@@ -525,6 +529,7 @@ for ax, lang in zip(axes, ("kk", "ru", "en")):
                 alpha=0.5 if is_random else 1.0, label="random (×5)" if method == "random_s0" else
                 (None if is_random else method))
     ax.axhline(1.0, color="gray", ls="--", lw=0.8)
+    ax.set_yscale("log")  # log scale: random removal can grow perplexity thousands of times
     ax.set_title(f"{lang}: perplexity growth")
     ax.set_xlabel("experts kept (of 64)")
     ax.invert_xaxis()

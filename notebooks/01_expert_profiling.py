@@ -1,5 +1,9 @@
 # %% [markdown]
+# ![LinguaPrune](https://raw.githubusercontent.com/s0nakh/linguaprune/main/assets/banner.png)
+#
 # # 01 · Which MoE experts "speak" Kazakh
+#
+# **Author:** Sophia Akhmetova ([@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
 # *[Русская версия](https://github.com/s0nakh/linguaprune/blob/main/notebooks/ru/01_expert_profiling.ipynb) · part of [LinguaPrune](https://github.com/s0nakh/linguaprune)*
 #

@@ -52,6 +52,31 @@ LinguaPrune measures **which experts a language really needs** and removes the r
 
 Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
 
+**Notebook 02 — quality after pruning.** Perplexity is measured on [Belebele](https://huggingface.co/datasets/facebook/belebele): 150 passages with the same content in every language. Values are relative to the unpruned model (1.00× = no loss; lower is better):
+
+| Experts kept (of 64) | kk · ours | kk · random (5 draws) | kk · English-chosen | ru · ours | ru · random | en · ours |
+|---|---|---|---|---|---|---|
+| 48 | **1.03×** | 2.0–4.6× | 1.55× | **1.09×** | 2.3–5.6× | 1.45× |
+| 38 (−41%) | **1.10×** | 16–1668× | 1.86× | **1.27×** | 11–25983× | 2.08× |
+| 32 | **1.16×** | 8.5–285× | 27× | **1.51×** | 18–523× | 3.56× |
+| 24 | **1.45×** | 393–7544× | 214× | **2.51×** | 981–17520× | 11.2× |
+
+<img src="experiments/02/perplexity_vs_experts.png" alt="Perplexity growth vs. experts kept" width="900">
+
+- **Choosing experts by kk/ru routing works.** With 41% of experts removed, Kazakh perplexity grows by 10% and Russian by 27%. A random set of the same size breaks the model (×16 to ×1668 for Kazakh).
+- **The calibration language matters.** Experts chosen on English text are much worse for kk/ru (×1.9 / ×3.3 at 38 experts). On this model, this supports [arXiv:2611.07654](https://arxiv.org/abs/2611.07654) rather than [arXiv:2610.15578](https://arxiv.org/abs/2610.15578).
+- **English pays the price, as intended** (×2.1 at 38 experts). For English, frequency-based selection is no better than random: English uses experts broadly.
+- **Router-weighted selection did not beat plain frequency.**
+- **Russian degrades more than Kazakh.** Every layer keeps the same number of experts, but early layers need more of them (see notebook 01). Per-layer budgets come next.
+- **Self-tests passed:** the mask matches physical removal exactly (choice agreement 1.0, weight difference 0).
+
+⚠️ **Limitations:**
+- Belebele multiple-choice accuracy of the *unpruned* model is near chance for kk/ru: 31% and 40% vs. 25% chance, with a strong bias toward answer "C". So accuracy cannot measure the damage here, and perplexity is the reliable signal.
+- Perplexity is not the same as downstream task quality.
+- This is one small model, and the mask does not yet save memory.
+
+Raw numbers: [`experiments/02/`](experiments/02/).
+
 ## How it works
 
 ```
@@ -83,7 +108,7 @@ The notebook verifies this with built-in self-tests before measuring anything.
 ## Roadmap
 
 - [x] 01 · Router profiling on OLMoE
-- [ ] 02 · Quality after pruning (Belebele kk/ru/en)
+- [x] 02 · Quality after pruning (Belebele kk/ru/en)
 - [ ] 03 · Same pipeline on Qwen3-30B-A3B
 - [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
 - [ ] Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**

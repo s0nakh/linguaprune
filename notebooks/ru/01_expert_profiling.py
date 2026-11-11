@@ -1,5 +1,9 @@
 # %% [markdown]
+# ![LinguaPrune](https://raw.githubusercontent.com/s0nakh/linguaprune/main/assets/banner.png)
+#
 # # 01 · Какие эксперты MoE «говорят» на казахском языке
+#
+# **Автор:** София Ахметова (Sophia Akhmetova, [@s0nakh](https://github.com/s0nakh)) · Apache-2.0
 #
 # *[English version](https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) · часть проекта [LinguaPrune](https://github.com/s0nakh/linguaprune)*
 #
