@@ -38,8 +38,8 @@ Sovereign and multilingual MoE models are huge. A 247B-parameter MoE, for exampl
 But a model serving Kazakh and Russian users rarely calls many of its experts.
 LinguaPrune measures **which experts a language really needs** and removes the rest, so the model fits on fewer GPUs.
 
-> **Status (Nov 2026):** we have *measured* what removing experts does to quality — removal is simulated with a router mask.
-> The model itself is **not smaller yet**: physically deleting the weights, exporting and 4-bit quantization are the next step.
+> **Status (Nov 2026):** on OLMoE-1B-7B the dropped experts are **physically removed** (6.9B → 4.3B parameters, 13.8 → 8.6 GB in fp16),
+> and the smaller model is verified to match the measured quality. **Not yet:** 4-bit quantization, a run on a laptop, larger models.
 
 > We present this as an **empirical study and an open tool**, not as a brand-new method.
 > Expert pruning (e.g. REAP) and language-specific pruning already exist; see [related work](docs/prior-art.md).
@@ -94,6 +94,25 @@ Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
 
 Raw numbers: [`experiments/02/`](experiments/02/).
 
+**Notebook 03 — the experts are physically removed.** We deleted the weights of the dropped experts and saved a standard checkpoint that loads with `from_pretrained`:
+
+| | Original | Pruned (38/64 experts per layer) |
+|---|---|---|
+| Parameters | 6.92B | **4.30B (−38%)** |
+| Size in fp16 | 13.8 GB | **8.6 GB** |
+| Perplexity vs. original, kk / ru / en | 1.00× | 1.10× / 1.27× / 2.08× |
+
+- **The pruned model matches the simulation.** Perplexity differs by 0.07%, and on positions where the model is confident the next-token predictions agree 100%.
+- **The saved checkpoint matches the model in memory exactly** (logit difference 0.0). It also reproduces notebook 02's numbers.
+- ⚠️ **Honest sample (greedy decoding, one prompt per language — anecdotal, not a benchmark):**
+  - Russian: the original answers "Столица Казахстана — Астана"; the pruned model says "Алматы" and starts repeating itself.
+  - English: the answer stays correct, then the model loops ("the the the…").
+  - Kazakh: incoherent in *both* models — the base model cannot write Kazakh.
+
+  So "+27% perplexity" for Russian is a real loss, not a rounding error. Next: milder cuts (48 experts) and per-layer budgets, plus task-level evaluation.
+
+Raw numbers: [`experiments/03/summary.json`](experiments/03/summary.json).
+
 ## How it works
 
 ```
@@ -130,7 +149,7 @@ Notebooks are bilingual: English first, Russian translation below each text cell
 
 - [x] 01 · Router profiling on OLMoE
 - [x] 02 · Quality after pruning (Belebele kk/ru/en)
-- [ ] 03 · Physically remove experts, save the smaller model, verify it matches the masked results *(notebook ready)*
+- [x] 03 · Physically remove experts, save the smaller model, verify it matches the masked results
 - [ ] 04 · 4-bit GGUF export and a run on an 8 GB laptop
 - [ ] 05 · Same pipeline on Qwen3-30B-A3B
 - [ ] REAP-style importance (gate × expert output norm) and per-layer budgets
