@@ -20,12 +20,10 @@ ATTENTION_PROJECTIONS = ("q_proj", "k_proj", "v_proj", "o_proj")
 
 
 def _group_params(weight: torch.Tensor, bits: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """Asymmetric min-max scale and zero point per row for one group of columns."""
-    low, high = weight.amin(dim=1), weight.amax(dim=1)
-    maxq = 2**bits - 1
-    scale = ((high - low) / maxq).clamp_min(1e-8)
-    zero = torch.round(-low / scale)
-    return scale, zero
+    """Asymmetric min-max scale and zero point per row for one group of columns. weight: [..., rows, cols]."""
+    low, high = weight.amin(dim=-1), weight.amax(dim=-1)
+    scale = ((high - low) / (2**bits - 1)).clamp_min(1e-8)
+    return scale, torch.round(-low / scale)
 
 
 def _quantize_column(column: torch.Tensor, scale: torch.Tensor, zero: torch.Tensor, bits: int) -> torch.Tensor:
@@ -34,41 +32,51 @@ def _quantize_column(column: torch.Tensor, scale: torch.Tensor, zero: torch.Tens
 
 
 @torch.no_grad()
-def gptq_quantize(weight: torch.Tensor, hessian: torch.Tensor, bits: int, group_size: int = 128,
-                  damp: float = 0.01, block_size: int = 128) -> torch.Tensor:
-    """Return GPTQ-quantized (dequantized) copy of `weight` [out, in] given `hessian` [in, in]."""
+def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int, group_size: int = 128,
+                          damp: float = 0.01, block_size: int = 128) -> torch.Tensor:
+    """GPTQ for a batch of independent matrices at once: weight [B, out, in], hessian [B, in, in].
+    Mathematically identical to running `gptq_quantize` on each pair, but loops over columns only once."""
     if bits >= NO_QUANT_BITS:
         return weight.clone()
     W = weight.float().clone()
     H = hessian.float().clone()
-    cols = W.shape[1]
-    if cols % group_size or H.shape != (cols, cols):
+    batch, _, cols = W.shape
+    if cols % group_size or H.shape != (batch, cols, cols):
         raise ValueError(f"weight {tuple(W.shape)} / hessian {tuple(H.shape)} / group_size {group_size} mismatch")
-    dead = torch.diag(H) == 0
-    H[dead, dead] = 1.0
-    W[:, dead] = 0.0
-    H += damp * torch.mean(torch.diag(H)) * torch.eye(cols, device=H.device)
+    diag = torch.diagonal(H, dim1=-2, dim2=-1)
+    dead = diag == 0
+    diag[dead] = 1.0  # writes through the view into H
+    W.masked_fill_(dead.unsqueeze(1), 0.0)
+    eye = torch.eye(cols, device=H.device)
+    H += (damp * diag.mean(dim=-1)).view(batch, 1, 1) * eye
     Hinv = torch.linalg.cholesky(torch.cholesky_inverse(torch.linalg.cholesky(H)), upper=True)
     Q = torch.zeros_like(W)
     scale = zero = None
     for i1 in range(0, cols, block_size):
         i2 = min(i1 + block_size, cols)
-        W1, Q1, E1 = W[:, i1:i2].clone(), torch.zeros_like(W[:, i1:i2]), torch.zeros_like(W[:, i1:i2])
-        Hinv1 = Hinv[i1:i2, i1:i2]
+        W1 = W[:, :, i1:i2].clone()
+        Q1, E1 = torch.zeros_like(W1), torch.zeros_like(W1)
+        Hinv1 = Hinv[:, i1:i2, i1:i2]
         for i in range(i2 - i1):
             col = i1 + i
             if col % group_size == 0:
-                group = torch.cat([W1[:, i:], W[:, i2:]], dim=1)[:, :group_size]
+                group = torch.cat([W1[:, :, i:], W[:, :, i2:]], dim=-1)[:, :, :group_size]
                 scale, zero = _group_params(group, bits)
-            w, d = W1[:, i], Hinv1[i, i]
+            w, d = W1[:, :, i], Hinv1[:, i, i].unsqueeze(1)
             q = _quantize_column(w, scale, zero, bits)
-            Q1[:, i] = q
+            Q1[:, :, i] = q
             err = (w - q) / d
-            W1[:, i:] -= err.unsqueeze(1) * Hinv1[i, i:].unsqueeze(0)
-            E1[:, i] = err
-        Q[:, i1:i2] = Q1
-        W[:, i2:] -= E1 @ Hinv[i1:i2, i2:]
+            W1[:, :, i:] -= err.unsqueeze(2) * Hinv1[:, i, i:].unsqueeze(1)
+            E1[:, :, i] = err
+        Q[:, :, i1:i2] = Q1
+        W[:, :, i2:] -= E1 @ Hinv[:, i1:i2, i2:]
     return Q.to(weight.dtype)
+
+
+def gptq_quantize(weight: torch.Tensor, hessian: torch.Tensor, bits: int, group_size: int = 128,
+                  damp: float = 0.01, block_size: int = 128) -> torch.Tensor:
+    """Return a GPTQ-quantized (dequantized) copy of `weight` [out, in] given `hessian` [in, in]."""
+    return gptq_quantize_batched(weight.unsqueeze(0), hessian.unsqueeze(0), bits, group_size, damp, block_size)[0]
 
 
 def _capture_moe_inputs(layer: nn.Module, inputs: Callable[[], Iterator[tuple[torch.Tensor, torch.Tensor]]],
@@ -114,7 +122,8 @@ def _expert_hessians(xs: list[torch.Tensor], gate: nn.Module, experts: nn.Module
 
 @torch.no_grad()
 def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_layer,
-                         group_size: int = 128, min_tokens: int = 16, attention_bits: int | None = 8) -> dict:
+                         group_size: int = 128, min_tokens: int = 16, attention_bits: int | None = 8,
+                         expert_chunk: int = 32) -> dict:
     """In place: attention to `attention_bits` (RTN), then every expert of this layer with GPTQ at
     `expert_bits[e]` bits, calibrated on `inputs()`. Returns per-expert calibration token counts."""
     if attention_bits is not None:
@@ -126,14 +135,19 @@ def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_
     stats = {}
     for stage, param in (("gate_up", experts.gate_up_proj), ("down", experts.down_proj)):
         hessians, counts = _expert_hessians(xs, gate, experts, stage)
-        for e, bits in enumerate(expert_bits):
-            bits = int(bits)
+        for bits in sorted(set(int(b) for b in expert_bits)):
             if bits >= NO_QUANT_BITS:
                 continue
-            if counts[e] < min_tokens:
+            chosen = [e for e, b in enumerate(expert_bits) if int(b) == bits]
+            for e in (e for e in chosen if counts[e] < min_tokens):  # too little data: round to nearest
                 param[e].copy_(fake_quantize(param[e], bits, group_size))
-            else:
-                param[e].copy_(gptq_quantize(param[e], hessians[e], bits, group_size))
+            calibrated = [e for e in chosen if counts[e] >= min_tokens]
+            for start in range(0, len(calibrated), expert_chunk):  # all experts of one bit-width at once
+                group = calibrated[start:start + expert_chunk]
+                quantized = gptq_quantize_batched(param[group], torch.stack([hessians[e] for e in group]),
+                                                  bits, group_size)
+                for e, q in zip(group, quantized):
+                    param[e].copy_(q)
         stats[stage] = counts
     return {"tokens_per_expert": stats["gate_up"].tolist(),
             "rtn_fallback_experts": int((stats["gate_up"] < min_tokens).sum())}

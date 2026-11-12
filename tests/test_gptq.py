@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune.gptq import gptq_quantize, quantize_layer_gptq_
+from linguaprune.gptq import gptq_quantize, gptq_quantize_batched, quantize_layer_gptq_
 from linguaprune.quant import fake_quantize
 
 
@@ -78,3 +78,13 @@ def test_layer_quantization_on_reference_block_reduces_error_vs_rtn():
         rtn_err = ((block(x) - reference) ** 2).mean().item()
     assert sum(stats["tokens_per_expert"]) == 1024 * 2  # every real token reaches top_k=2 experts
     assert gptq_err < rtn_err
+
+
+def test_batched_gptq_equals_one_matrix_at_a_time():
+    torch.manual_seed(0)
+    W = torch.randn(3, 16, 256)
+    H = torch.stack([(lambda X: X.T @ X)(correlated_inputs(512, 256, seed=s)) for s in range(3)])
+    H[1, :, 5] = H[1, 5, :] = 0  # one dead column in one matrix
+    batched = gptq_quantize_batched(W, H, bits=3, group_size=128)
+    for b in range(3):
+        torch.testing.assert_close(batched[b], gptq_quantize(W[b], H[b], bits=3, group_size=128), rtol=1e-4, atol=1e-4)

@@ -23,7 +23,7 @@ from linguaprune.quant import (
     snapshot_experts,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "allocate_bits_by_coverage",
