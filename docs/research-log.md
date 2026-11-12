@@ -161,3 +161,28 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - Recommended configuration: kk+ru 4/3 at 90% (Belebele unchanged in all languages).
   - Next: a real low-bit file (measured size and speed, not analytic); then the full KazMMLU to resolve the kk trend.
 - [Notebook](../notebooks/06_qwen3_language_aware_gptq.ipynb) · [data](../experiments/06/full/) · [figure script](../scripts/plot_qwen3_result.py)
+
+## 2026-11-12 · 07 · A real compressed file
+
+- **Question.** Do the 06 results survive when the model is written as real low-bit files and read back from disk?
+- **Setup.**
+  - Same model, calibration and exam as 06; GPTQ re-run with linguaprune 0.5.0, whose quantization grid stores fp16 scales and integer zero points exactly as the file does.
+  - Written in the standard GPTQ v1 layout: experts 4 or 3 bits (group 128), attention 8 bits, embeddings and norms 16 bits. Per-module bit widths are declared in the `dynamic` field of `quantization_config`.
+  - Every quantized row of the table is scored **from the written file**, not from the in-memory model. One Kaggle T4, 116 min including upload.
+- **Result.**
+
+  | Configuration | On disk | kk ppl | ru ppl | KazMMLU kk | KazMMLU ru | Belebele kk / ru / en |
+  |---|---|---|---|---|---|---|
+  | original | 61.1 GB | — | — | 66.8% | 71.4% | 77.3 / 92.7 / 92.7% |
+  | **kk+ru 4/3 @90%** | **15.24 GB (4.0×)** | **+1.3%** | **+0.4%** | 65.1% | 70.9% | 78.7 / 91.3 / 93.3% |
+  | kk+ru 4-bit | 17.39 GB (3.5×) | +1.2% | +1.4% | 64.9% | 71.7% | 76.0 / 92.7 / 94.0% |
+
+  - Largest score difference between the in-memory model and the file: **0.0** for both configurations.
+  - Factual probes: 3/3 in every language.
+  - **Target met from a real file**: 4.0× smaller, kk and ru perplexity within 2%.
+- **Observations.**
+  - The numbers move slightly from 06 (kk +0.9% → +1.3%, ru +1.0% → +0.4%) because the quantization grid changed to match the file format; that is run-to-run variation of GPTQ, not file loss.
+  - The KazMMLU kk gap is −1.6 pt here vs. −2.7 pt in 06; the full KazMMLU is still needed to settle it.
+  - Not tested yet: loading in vLLM and other runtimes, and speed.
+- **Decision.** Publish both checkpoints on Hugging Face; next, test runtime compatibility and compare against popular 4-bit versions on the same exam.
+- [Notebook](../notebooks/07_real_gptq_checkpoint.ipynb) · [data](../experiments/07/full/)
