@@ -2,8 +2,8 @@
 
 <img src="assets/banner.png" alt="LinguaPrune" width="720">
 
-**Language-aware expert pruning for Mixture-of-Experts LLMs.**
-Keep the experts your languages actually use, drop the rest, then quantize.
+**Language-aware compression for Mixture-of-Experts LLMs.**
+Measure which experts your languages use, give them the bits, calibrate on your languages, and check that nothing broke.
 First target: Kazakh 🇰🇿 + Russian.
 
 <p>
@@ -14,14 +14,14 @@ First target: Kazakh 🇰🇿 + Russian.
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
 </p>
 <p>
-<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.11%2B-39FF14?style=for-the-badge&labelColor=0D1117&logo=python&logoColor=white"></a>
+<a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-39FF14?style=for-the-badge&labelColor=0D1117&logo=python&logoColor=white"></a>
 <a href="https://pytorch.org/"><img alt="PyTorch" src="https://img.shields.io/badge/PyTorch-2.x-EE4C2C?style=for-the-badge&labelColor=0D1117&logo=pytorch&logoColor=white"></a>
 <a href="https://github.com/huggingface/transformers"><img alt="Transformers" src="https://img.shields.io/badge/Transformers-5.x-FFD21E?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
-<a href="https://www.kaggle.com/"><img alt="Kaggle" src="https://img.shields.io/badge/Kaggle-GPU%20T4%20%C3%972-20BEFF?style=for-the-badge&labelColor=0D1117&logo=kaggle&logoColor=white"></a>
+<a href="https://www.kaggle.com/"><img alt="Kaggle" src="https://img.shields.io/badge/Kaggle-free%20T4-20BEFF?style=for-the-badge&labelColor=0D1117&logo=kaggle&logoColor=white"></a>
 </p>
 <p>
-<a href="https://huggingface.co/allenai/OLMoE-1B-7B-0125"><img alt="Model" src="https://img.shields.io/badge/model-OLMoE--1B--7B-F0529C?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
-<a href="https://huggingface.co/datasets/facebook/belebele"><img alt="Eval" src="https://img.shields.io/badge/eval-Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
+<a href="https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507"><img alt="Model" src="https://img.shields.io/badge/model-Qwen3--30B--A3B-F0529C?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
+<a href="#-evaluation"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
 <a href="#"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
@@ -32,43 +32,118 @@ First target: Kazakh 🇰🇿 + Russian.
 
 ---
 
-## Why
+## 🏆 Result
 
-Sovereign and multilingual MoE models are huge. A 247B-parameter MoE, for example, needs roughly 494 GB in BF16, or about 7 server GPUs.
-But a model serving Kazakh and Russian users rarely calls many of its experts.
-LinguaPrune measures **which experts a language really needs** and removes the rest, so the model fits on fewer GPUs.
+**Qwen3-30B-A3B goes from 61 GB to 15.5 GB (3.9× smaller) while Kazakh and Russian perplexity grow by about 1%.** No exam (KazMMLU, Belebele, factual probes) shows a statistically significant loss.
 
-> **Status (Nov 2026):** on OLMoE-1B-7B the dropped experts are **physically removed** (6.9B → 4.3B parameters, 13.8 → 8.6 GB in fp16),
-> and the smaller model is verified to match the measured quality. **Not yet:** 4-bit quantization, a run on a laptop, larger models.
+| Configuration (Qwen3-30B-A3B) | Memory | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
+|---|---|---|---|---|---|---|
+| Original (16-bit) | 61.1 GB | — | — | 66.8% | 71.4% | 77.3% / 92.7% |
+| Uniform 4-bit, kk+ru calibration | 17.6 GB · 3.5× | +1.7% | +1.9% | 65.1% | 70.9% | 77.3% / 93.3% |
+| **kk+ru 4/3-bit, 90% of traffic at 4 bits** | **15.5 GB · 3.9×** | **+0.9%** | **+1.0%** | **64.1%** | **71.7%** | **77.3% / 92.7%** |
+| **kk+ru 4/3-bit, 80% of traffic at 4 bits** | **15.0 GB · 4.1×** | **−0.4%** | **−0.9%** | **64.9%** | **69.4%** | **77.3% / 89.3%** |
+| English 4/3-bit (control, same memory) | 15.5 GB · 3.9× | +14.3% | +8.3% | 67.0% | 72.2% | 74.7% / 91.3% |
 
-> We present this as an **empirical study and an open tool**, not as a brand-new method.
-> Expert pruning (e.g. REAP) and language-specific pruning already exist; see [related work](docs/prior-art.md).
-> Our contribution is Kazakh + Russian: measured, reproducible and honest about quality loss.
+<img src="assets/qwen3_result.png" alt="Perplexity growth for Kazakh and Russian per configuration" width="820">
 
-## Results so far
+> [!IMPORTANT]
+> **The target was fixed before the run and is met:** at least 3.5× smaller than 16-bit, perplexity growth of at most 2% for both kk and ru, and no KazMMLU drop beyond noise.
+> At the same memory, choosing bits and calibration by English text costs Kazakh **16× more** (+14.3% vs. +0.9%).
 
-**Notebook 01 — router profiling** on [`allenai/OLMoE-1B-7B-0125`](https://huggingface.co/allenai/OLMoE-1B-7B-0125)
-(64 experts per layer, 8 active; 100k Wikipedia tokens per language):
+> [!WARNING]
+> **What this result is not (yet):**
+> - Quantization is **simulated** and memory is **computed** from the bit widths. A real low-bit file is the [next step](#roadmap).
+> - KazMMLU for Kazakh trends down by 2–3 points in every kk+ru configuration (paired 95% CI for the 90% variant: −5.4 to 0.0 points, McNemar p = 0.08). That is not significant on 370 questions, so the full KazMMLU run comes next.
+> - One model, one seed, 762 KazMMLU questions and 150 Belebele passages per language.
 
-| Language | Experts needed for 90% of router picks (of 64) |
+All raw scores, per question: [`experiments/06/full/`](experiments/06/full/). The paired tests are in the [research log](docs/research-log.md#2026-11-12--06--qwen3-30b-a3b-compressed-4).
+
+## 💡 Why
+
+Sovereign and multilingual MoE models are huge, and Kazakh users rarely need what an English-centric compression keeps.
+A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.5 GB it fits one 24 GB consumer card.
+
+The open question is *which* weights can lose precision without hurting a low-resource language.
+Standard quantizers calibrate on English text. We show on Qwen3 that this choice alone costs Kazakh 16× more quality at the same memory.
+
+> [!NOTE]
+> This is an **empirical study and an open tool**, not a brand-new algorithm. GPTQ ([arXiv:2210.17323](https://arxiv.org/abs/2210.17323)), expert pruning (e.g. REAP) and language-specific pruning exist already; see [related work](docs/prior-art.md).
+> Our contribution: Kazakh + Russian, measured against controls at equal memory, reproducible on free GPUs, and honest about losses.
+
+## ⚙️ How it works
+
+```
+kk + ru text ──► router statistics ──► which experts carry kk/ru traffic, per layer
+                                             │
+                   experts covering 90% of the traffic ─► 4 bits, the rest ─► 3 bits
+                                             │
+              GPTQ per expert, calibrated only on the kk/ru tokens routed to it
+                                             │
+       exam: perplexity · KazMMLU · Belebele · factual probes, vs. English control
+```
+
+- **Streaming.** The 61 GB model never sits in memory. `linguaprune.streaming` loads one decoder layer at a time from the safetensors files, so the whole run (6 configurations) takes 2.5 hours on one free Kaggle T4.
+- **Attention** stays at 8 bits and embeddings at 16 bits; experts hold almost all of the weights.
+- **Calibration never sees the exam.** Calibration is Wikipedia; the exam is KazMMLU and Belebele. A test in CI checks the separation.
+
+## 🧪 Evaluation
+
+| Exam | What it measures | Size |
+|---|---|---|
+| Perplexity on [Belebele](https://huggingface.co/datasets/facebook/belebele) passages | Language modelling, same content in kk / ru / en | 150 passages per language |
+| [KazMMLU](https://huggingface.co/datasets/MBZUAI/KazMMLU) | School and university knowledge in Kazakh and Russian | 370 kk + 392 ru questions, subject-balanced |
+| Belebele multiple choice | Reading comprehension | 150 per language |
+| Factual probes | e.g. "the capital of Kazakhstan is Astana", scored by likelihood | 3 per language |
+
+Every compressed model is compared **per question** with the original (paired bootstrap and McNemar test), and against a control with the same memory.
+
+## 📓 Notebooks
+
+| # | Notebook | Question | Run your own copy |
+|---|---|---|---|
+| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts does each language use? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
+| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Does pruning by kk+ru routing keep quality? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
+| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Does a physically smaller checkpoint match? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
+| 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | Mixed precision by kk+ru traffic (round-to-nearest) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/04_language_aware_quantization.ipynb) |
+| 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ calibrated on kk+ru, layer by layer | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
+| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | **The result above:** Qwen3-30B-A3B on a free T4 | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
+
+Notebooks are bilingual: English first, Russian below each text cell.
+To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
+
+## 🧭 How we got here
+
+Each step answered one question and changed the plan. Negative results stay in; the full story with dates is in the [research log](docs/research-log.md).
+
+<details>
+<summary><b>01 · Kazakh uses far fewer experts than English</b> (OLMoE-1B-7B)</summary>
+
+<br>
+
+Experts needed to cover 90% of router picks, of 64 per layer (100k Wikipedia tokens per language):
+
+| Language | Experts |
 |---|---|
 | Kazakh (kk) | **22.5** |
 | Russian (ru) | 35.9 |
 | Chinese (zh) | 39.5 |
 | English (en) | 47.8 |
 
-- **kk + ru together need ~37.7 of 64 experts per layer.** That suggests ~41% of experts could go (bootstrap 95% CI for kept experts: 37.3–38.4).
-- On **held-out articles**, the chosen experts still cover 96% (kk) and 91% (ru) of router picks.
-- ⚠️ This measures how often experts are *chosen*, **not** model quality. Notebook 02 measures quality.
+- kk + ru together need ~37.7 (bootstrap 95% CI 37.3–38.4). On held-out articles the chosen experts still cover 96% (kk) and 91% (ru).
+- Deep layers need far fewer experts: in layer 14, Kazakh needs 12 of 64.
+- Two independent runs gave identical numbers.
 
 <img src="experiments/01/experts_needed_per_layer.png" alt="Experts needed per layer" width="720">
 
-- **Deep layers need far fewer experts.** In layer 14, Kazakh needs only 12 of 64, while early layers need ~40. This motivates per-layer pruning budgets.
-- **Reproducible:** two independent Kaggle runs gave identical numbers and identical per-layer expert sets (model revision `9b0c1aa`).
+Data: [`experiments/01/`](experiments/01/)
+</details>
 
-Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
+<details>
+<summary><b>02 · Pruning by kk+ru routing beats random and English choice by far</b></summary>
 
-**Notebook 02 — quality after pruning.** Perplexity is measured on [Belebele](https://huggingface.co/datasets/facebook/belebele): 150 passages with the same content in every language. Values are relative to the unpruned model (1.00× = no loss; lower is better):
+<br>
+
+Perplexity relative to the unpruned model on Belebele passages (1.00× = no loss):
 
 | Experts kept (of 64) | kk · ours | kk · random (5 draws) | kk · English-chosen | ru · ours | ru · random | en · ours |
 |---|---|---|---|---|---|---|
@@ -79,22 +154,16 @@ Raw numbers: [`experiments/01/summary.json`](experiments/01/summary.json).
 
 <img src="experiments/02/perplexity_vs_experts.png" alt="Perplexity growth vs. experts kept" width="900">
 
-- **Choosing experts by kk/ru routing works.** With 41% of experts removed, Kazakh perplexity grows by 10% and Russian by 27%. A random set of the same size breaks the model (×16 to ×1668 for Kazakh).
-- **The calibration language matters.** Experts chosen on English text are much worse for kk/ru (×1.9 / ×3.3 at 38 experts). On this model, this supports [arXiv:2611.07654](https://arxiv.org/abs/2611.07654) rather than [arXiv:2610.15578](https://arxiv.org/abs/2610.15578).
-- **English pays the price, as intended** (×2.1 at 38 experts). For English, frequency-based selection is no better than random: English uses experts broadly.
-- **Router-weighted selection did not beat plain frequency.**
-- **Russian degrades more than Kazakh.** Every layer keeps the same number of experts, but early layers need more of them (see notebook 01). Per-layer budgets come next.
-- **Self-tests passed:** the mask matches physical removal exactly (choice agreement 1.0, weight difference 0).
+- Language-aware choice works relative to controls, but Russian loses 27% at 38 experts.
+- Router-weighted selection did not beat plain frequency.
 
-⚠️ **Limitations:**
-- Belebele multiple-choice accuracy of the *unpruned* model is near chance for kk/ru: 31% and 40% vs. 25% chance, with a strong bias toward answer "C". So accuracy cannot measure the damage here, and perplexity is the reliable signal.
-- Perplexity is not the same as downstream task quality: "+10% perplexity" does **not** mean "10% worse answers".
-- The original OLMoE is weak in Kazakh to begin with, so we preserved a *weak* baseline, not a strong one. Stronger multilingual MoE models come next.
-- This is one small model, and the mask does not yet save memory.
+Data: [`experiments/02/`](experiments/02/)
+</details>
 
-Raw numbers: [`experiments/02/`](experiments/02/).
+<details>
+<summary><b>03 · Deleting experts saves memory but deletes knowledge</b></summary>
 
-**Notebook 03 — the experts are physically removed.** We deleted the weights of the dropped experts and saved a standard checkpoint that loads with `from_pretrained`:
+<br>
 
 | | Original | Pruned (38/64 experts per layer) |
 |---|---|---|
@@ -102,142 +171,111 @@ Raw numbers: [`experiments/02/`](experiments/02/).
 | Size in fp16 | 13.8 GB | **8.6 GB** |
 | Perplexity vs. original, kk / ru / en | 1.00× | 1.10× / 1.27× / 2.08× |
 
-- **The pruned model matches the simulation.** Perplexity differs by 0.07%, and on positions where the model is confident the next-token predictions agree 100%.
-- **The saved checkpoint matches the model in memory exactly** (logit difference 0.0). It also reproduces notebook 02's numbers.
-- ⚠️ **Honest sample (greedy decoding, one prompt per language — anecdotal, not a benchmark):**
-  - Russian: the original answers "Столица Казахстана — Астана"; the pruned model says "Алматы" and starts repeating itself.
-  - English: the answer stays correct, then the model loops ("the the the…").
-  - Kazakh: incoherent in *both* models — the base model cannot write Kazakh.
+- The saved checkpoint matches the masked simulation (perplexity within 0.07%).
+- But the pruned model answers "Almaty" instead of "Astana" in Russian. **Decision: keep every expert and compress instead.**
 
-  So "+27% perplexity" for Russian is a real loss, not a rounding error. Next: milder cuts (48 experts) and per-layer budgets, plus task-level evaluation.
+Data: [`experiments/03/`](experiments/03/)
+</details>
 
-Raw numbers: [`experiments/03/summary.json`](experiments/03/summary.json).
+<details>
+<summary><b>04 · Bits by kk+ru traffic help, but round-to-nearest is too lossy</b></summary>
 
-**Notebook 04 — keep every expert, give it bits by kk+ru traffic (simulated quantization).** The target was fixed before the run: ≥3.5× smaller than fp16, with kk/ru perplexity growing by at most 2%. **No configuration met it.** Perplexity growth vs. fp16 (memory is analytic):
+<br>
 
-| Configuration | kk | ru | Memory |
+| Configuration (OLMoE) | kk | ru | Memory |
 |---|---|---|---|
 | uniform 4-bit | +6.4% | +4.5% | 4.38 GB (3.2×) |
-| **kk+ru 4/3-bit** | **+8.8%** | **+6.8%** | 3.83 GB (3.6×) |
+| kk+ru 4/3-bit | +8.8% | +6.8% | 3.83 GB (3.6×) |
 | English 4/3-bit (same memory) | +16.5% | +13.6% | 3.83 GB |
-| **kk+ru 4/3/2-bit** | **+13%** | **+17%** | 3.30 GB (4.2×) |
+| kk+ru 4/3/2-bit | +13% | +17% | 3.30 GB (4.2×) |
 | English 4/3/2-bit (same memory) | +217% | +289% | 3.30 GB |
-| random 4/3/2-bit (3 draws) | +126…404% | +130…420% | 3.30 GB |
 
-- **Language-aware bit allocation works.** At equal memory, kk+ru allocation halves the loss compared with English allocation at 4/3 bits, and cuts it ~15–20× at 4/3/2 bits.
-- **The quantizer is the bottleneck.** Plain round-to-nearest loses +6% on Kazakh even at uniform 4 bits, and the 3-bit variants turn "Astana" into "Almaty". Next: GPTQ calibrated on kk+ru text, with 8-bit attention/embeddings.
+Target not met. The allocation works; the quantizer is the bottleneck.
 
-Raw numbers: [`experiments/04/`](experiments/04/).
+Data: [`experiments/04/`](experiments/04/)
+</details>
 
-**Notebook 05 — GPTQ calibrated on kk+ru, run layer by layer.** Same exam and target; attention is 8-bit:
+<details>
+<summary><b>05 · GPTQ with kk+ru calibration cuts the loss 3–4×</b></summary>
+
+<br>
 
 | Configuration (OLMoE) | kk | ru | en | Memory |
 |---|---|---|---|---|
 | RTN 4-bit | +6.6% | +4.5% | +15.2% | 4.12 GB (3.4×) |
 | **GPTQ 4-bit, kk+ru calibration** | **+1.5%** | **+1.5%** | −1.1% | 4.12 GB (3.4×) |
-| **GPTQ kk+ru 4/3** | **+2.2%** | +4.4% | +18.7% | 3.57 GB (3.9×) |
+| GPTQ kk+ru 4/3 | +2.2% | +4.4% | +18.7% | 3.57 GB (3.9×) |
 | GPTQ English 4/3 (same memory) | +20.2% | +13.4% | −9.2% | 3.57 GB (3.9×) |
-| **GPTQ kk+ru 4/3/2** | **+2.0%** | +18.4% | +287% | 3.04 GB (4.6×) |
+| GPTQ kk+ru 4/3/2 | +2.0% | +18.4% | +287% | 3.04 GB (4.6×) |
 
-- **GPTQ cuts the loss 3–4× vs. round-to-nearest.** The quantizer was the bottleneck.
-- **Calibration language decides the result:** at equal memory, English calibration loses +20% on Kazakh, kk+ru loses +2%.
-- **Kazakh stays within ~2% even at 4.6×; Russian is the weak spot.** Kazakh concentrates on few experts and takes the 4-bit slots.
+Russian was the weak spot, so step 06 added a variant that keeps 90% of kk+ru traffic at 4 bits.
 
-Raw numbers: [`experiments/05/`](experiments/05/).
+Data: [`experiments/05/`](experiments/05/)
+</details>
 
-**Qwen3-30B-A3B baseline (step 06), streamed on a free T4.** 61 GB of weights, 48 layers, **15 minutes**. The model knows Kazakh: KazMMLU **66.8%** kk / **71.4%** ru (~380 questions each), Belebele accuracy 92.7% kk, factual probes 3/3 in every language. Raw numbers: [`experiments/06/baseline/`](experiments/06/baseline/).
+<details>
+<summary><b>06 · Qwen3-30B-A3B: 2-bit experts break knowledge that perplexity hides</b></summary>
 
-## How it works
+<br>
 
-```
-text in kk/ru ──► router hooks ──► which experts are picked, per layer
-                                        │
-                     keep the top-K experts per layer, mask the rest
-                                        │
-              evaluate: perplexity + reading comprehension (Belebele)
-                vs. random experts and English-calibrated experts
-```
+The 4/3/2-bit variant (13.2 GB, 4.6×) keeps Kazakh perplexity at +1.9%, yet KazMMLU falls to **26%** (chance level) and Belebele to 36%.
+**Perplexity on one language alone is not a safe quality check**, which is why every result above is also scored on KazMMLU and Belebele.
 
-Pruning is simulated with a router mask: dropped experts get a −∞ score.
-The masked model's outputs are identical to a model with those experts physically deleted.
-The notebook verifies this with built-in self-tests before measuring anything.
+Data: [`experiments/06/`](experiments/06/)
+</details>
 
-## Notebooks
+<a id="roadmap"></a>
+## 🗺️ Roadmap
 
-| # | Notebook | What it does | Run your own copy |
-|---|---|---|---|
-| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts each language uses; how many could be removed | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
-| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Remove experts and measure quality on kk/ru/en against random and English baselines | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
-| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Physically delete the experts, verify the smaller model matches the simulation, save and reload it | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
+✅ done · 🔥 next · ⬜ planned
 
-Notebooks are bilingual: English first, Russian translation below each text cell.
-*Open in Kaggle* creates **your own copy** of the notebook in your Kaggle account.
+- ✅ 01–05 · Routing profile, pruning, physical removal, mixed precision, GPTQ on OLMoE
+- ✅ 06 · **Qwen3-30B-A3B: 3.9× smaller, kk/ru within 1%**, on a free T4
+- 🔥 Real low-bit file on Hugging Face (not simulated), with measured size and speed
+- ⬜ Full KazMMLU and MERA to settle the 2–3 point trend for Kazakh
+- ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
+- ⬜ Second language pair and a second MoE family
 
-**Run on Kaggle:**
-1. Click *Open in Kaggle*.
-2. Set **Accelerator → GPU T4 x2** and **Internet → On**.
-3. Run **Save Version → Save & Run All**.
-4. Results land in `/kaggle/working/results`.
-
-## Roadmap
-
-✅ done · 🔥 in progress · ⬜ planned
-
-- ✅ 01 · Router profiling on OLMoE
-- ✅ 02 · Quality after pruning (Belebele kk/ru/en)
-- ✅ 03 · Physically remove experts, save the smaller model, verify it matches the masked results
-- ✅ 04 · Language-aware mixed-precision allocation (simulated RTN): works vs. English/random, target not met
-- ✅ 05 · GPTQ calibrated on kk+ru, streamed layer by layer: Kazakh within ~2% up to 4.6×, Russian is the weak spot
-- 🔥 **06 · Qwen3-30B-A3B on free Kaggle GPUs: baseline done, compression run** — *in progress*
-- ⬜ 07 · Real low-bit file format and a run on a laptop
-- ⬜ 08 · Full benchmark (KazMMLU, Belebele accuracy, MERA) on a model that is strong in Kazakh
-- ⬜ REAP-style importance (gate × expert output norm) and per-layer budgets
-- ⬜ Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**
-- ⬜ Larger MoE models for Kazakh/Russian
-- ⬜ `pip install linguaprune` CLI: profile → prune → export, for any language
-
-**Our falsification test:** at equal memory, pruning + 4-bit must beat both uniform low-bit quantization and a smaller dense model on kk/ru quality. If it doesn't, we will publish that result.
-
-## Python package
-
-The pruning code used by the notebooks is a small, tested package:
+## 📦 Python package
 
 ```bash
-pip install "git+https://github.com/s0nakh/linguaprune@v0.1.0"
+pip install "git+https://github.com/s0nakh/linguaprune@v0.4.0"
 ```
 
-```python
-from linguaprune import language_frequency_score, top_experts, masked_experts, prune_experts
+| Module | What it does |
+|---|---|
+| `linguaprune.pruning` | Router statistics, expert masks, physical expert removal |
+| `linguaprune.quant` | Bit allocation by language traffic, round-to-nearest, memory accounting |
+| `linguaprune.gptq` | Batched per-expert GPTQ with routed calibration tokens |
+| `linguaprune.streaming` | Layer-by-layer evaluation of models larger than GPU memory |
+| `linguaprune.belebele` | Belebele and multiple-choice scoring |
 
-kept = top_experts(language_frequency_score(router_counts, ["kk", "ru"]), keep=38)
-with masked_experts(model, kept):   # simulate: dropped experts can't be picked
-    ...
-prune_experts(model, kept)           # delete them for real; then model.save_pretrained(...)
-```
+Tests compare every transformation with a reference implementation of the MoE classes from `transformers` 5.x: `pip install -e ".[test]" && pytest`.
 
-Tests check that physical removal gives exactly the same outputs as the mask, using a copy of the OLMoE MoE classes from `transformers` 5.x: `pip install -e ".[test]" && pytest`.
-
-## Development
+## 🛠️ Development
 
 Notebooks are edited as plain Python (`# %%` cells) and converted:
 
 ```bash
-python3 scripts/py_to_ipynb.py notebooks/02_prune_and_measure.py
+python3 scripts/py_to_ipynb.py notebooks/06_qwen3_language_aware_gptq.py
+python3 scripts/plot_qwen3_result.py   # redraws the figure above from experiments/06/full
 ```
 
-Notebooks are bilingual: every text cell is in English first, with a Russian translation below.
+## 📚 Related work
 
-## Citation
+Expert pruning (REAP), language-specific expert studies, and the closest work: English calibration erodes Lithuanian under expert pruning ([arXiv:2611.07654](https://arxiv.org/abs/2611.07654)). We see the same effect for Kazakh under quantization. The comparison with each is in [docs/prior-art.md](docs/prior-art.md).
+
+## 📝 Citation
 
 ```bibtex
 @software{linguaprune2026,
-  title  = {LinguaPrune: Language-aware expert pruning for MoE LLMs},
+  title  = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
   author = {Akhmetova, Sophia},
   year   = {2026},
   url    = {https://github.com/s0nakh/linguaprune}
 }
 ```
 
-## License
+## ⚖️ License
 
-[Apache-2.0](LICENSE). Models and datasets keep their own licenses. For example, KazMMLU is CC-BY-NC-4.0 and Belebele is CC-BY-SA-4.0.
+[Apache-2.0](LICENSE). Models and datasets keep their own licenses: Qwen3 is Apache-2.0, KazMMLU is CC-BY-NC-4.0 and Belebele is CC-BY-SA-4.0.

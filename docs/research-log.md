@@ -116,7 +116,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 - **Result.**
   - The whole model was processed in **15 minutes**.
   - KazMMLU: **66.8%** kk and **71.4%** ru, on ~380 subject-balanced questions each (chance ≈ 20–25%).
-  - Belebele accuracy: 92.7% kk.
+  - Belebele accuracy: 77.3% kk, 92.7% ru and en. *(Corrected 2026-11-12: an earlier version of this entry gave 92.7% for kk.)*
   - Factual probes: 3/3 in every language.
 - **Decision.** Yes. The compression run starts with:
   - original;
@@ -125,3 +125,39 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - English 4/3 at equal memory;
   - kk+ru 4/3/2.
 - [Notebook](../notebooks/06_qwen3_language_aware_gptq.ipynb) · [baseline data](../experiments/06/baseline/)
+
+## 2026-11-12 · 06 · Qwen3-30B-A3B compressed 4×
+
+- **Question.** Does language-aware GPTQ reach the target on a model that is strong in Kazakh?
+- **Target**, fixed before the run: ≥3.5× smaller than 16-bit; kk and ru perplexity growth ≤ 2%; KazMMLU not lower beyond noise.
+- **Setup.**
+  - Qwen3-30B-A3B-Instruct-2507, streamed layer by layer on one Kaggle T4 (145 min for 6 configurations).
+  - Experts: GPTQ, group 128, calibrated on 64 kk + 64 ru Wikipedia articles (English for the control). Experts that receive fewer than 16 calibration tokens fall back to round-to-nearest.
+  - Bits per expert from live router traffic on the calibration text: experts covering 80% or 90% of kk+ru traffic get 4 bits, the rest 3 bits.
+  - Exam: Belebele perplexity and accuracy (150 per language), KazMMLU (370 kk + 392 ru), factual probes. Paired tests against the original, question by question.
+- **Result.**
+
+  | Configuration | Memory | kk ppl | ru ppl | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
+  |---|---|---|---|---|---|---|
+  | original | 61.1 GB | — | — | 66.8% | 71.4% | 77.3 / 92.7% |
+  | GPTQ 4-bit | 17.6 GB (3.5×) | +1.7% | +1.9% | −1.6 pt | −0.5 pt | 0.0 / +0.7 pt |
+  | **kk+ru 4/3 @90%** | **15.5 GB (3.9×)** | **+0.9%** | **+1.0%** | −2.7 pt | +0.3 pt | 0.0 / 0.0 pt |
+  | **kk+ru 4/3 @80%** | **15.0 GB (4.1×)** | **−0.4%** | **−0.9%** | −1.9 pt | −2.0 pt | 0.0 / −3.3 pt |
+  | English 4/3 @90% (control) | 15.5 GB (3.9×) | +14.3% | +8.3% | +0.3 pt | +0.8 pt | −2.7 / −1.3 pt |
+  | kk+ru 4/3/2 | 13.2 GB (4.6×) | +1.9% | +7.3% | −40.8 pt | −47.7 pt | −41.3 / −54.0 pt |
+
+  - **Paired tests** (bootstrap 95% CI, McNemar):
+    - kk+ru 4/3 @90%, KazMMLU kk: −2.7 pt [−5.4, 0.0], 18 questions lost and 8 gained, p = 0.08.
+    - kk+ru 4/3 @80%, KazMMLU kk: −1.9 pt [−5.1, +1.1], p = 0.32; KazMMLU ru: −2.0 pt [−4.6, +0.3], p = 0.17; Belebele ru: −3.3 pt [−7.3, +0.7], p = 0.18.
+    - No difference for the two target configurations is significant at 0.05. Every 4/3/2 difference is (p < 0.001).
+  - Factual probes: 3/3 in every language for every configuration.
+  - **Target met** by kk+ru 4/3 at 80% and at 90%.
+- **Observations.**
+  - At equal memory, English calibration costs Kazakh perplexity 16× more than kk+ru calibration (+14.3% vs. +0.9%).
+  - But KazMMLU does not separate the two: the English control keeps KazMMLU (+0.3 pt), while every kk+ru configuration trends 2–3 points lower on kk. With 370 questions we cannot tell whether this is noise.
+  - 2-bit experts break the model even though Kazakh perplexity stays at +1.9%. Perplexity on one language is not a safe quality check on its own.
+  - Negative perplexity growth at 80% likely reflects calibration on similar (Wikipedia-style) text; it is not a claim that the compressed model is better.
+- **Decision.**
+  - Recommended configuration: kk+ru 4/3 at 90% (Belebele unchanged in all languages).
+  - Next: a real low-bit file (measured size and speed, not analytic); then the full KazMMLU to resolve the kk trend.
+- [Notebook](../notebooks/06_qwen3_language_aware_gptq.ipynb) · [data](../experiments/06/full/) · [figure script](../scripts/plot_qwen3_result.py)
