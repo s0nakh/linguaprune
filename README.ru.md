@@ -26,7 +26,7 @@
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
 
-[English](README.md) · [Связанные работы](docs/prior-art.ru.md)
+[English](README.md) · [Исследовательский журнал](docs/research-log.ru.md) · [Связанные работы](docs/prior-art.ru.md)
 
 </div>
 

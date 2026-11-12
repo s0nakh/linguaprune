@@ -26,7 +26,7 @@ First target: Kazakh 🇰🇿 + Russian.
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
 
-[Русская версия](README.ru.md) · [Related work](docs/prior-art.md)
+[Русская версия](README.ru.md) · [Research log](docs/research-log.md) · [Related work](docs/prior-art.md)
 
 </div>
 
