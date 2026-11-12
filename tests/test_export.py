@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune.export import from_gptq, gptq_bits, pack_rows, to_gptq, unpack_rows
+from linguaprune.export import from_gptq, gptq_bits, pack_rows, qzeros_v1_to_v2, to_gptq, unpack_rows
 from linguaprune.gptq import gptq_quantize_batched, rtn_quantize
 
 
@@ -131,3 +131,40 @@ def test_written_checkpoint_reproduces_the_simulated_scores_exactly(tmp_path):
     for a, b in zip(simulated, from_file):
         assert a.span_logprob == b.span_logprob
         assert a.choice_logits == b.choice_logits
+
+
+# ---- gptq_v2 layout (GPTQModel) ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("bits", [3, 4, 8])
+def test_v2_qzeros_store_the_zero_points_themselves(bits):
+    torch.manual_seed(bits)
+    q, scale, zero = rtn_quantize(torch.randn(64, 256), bits, group_size=128)
+    v1 = to_gptq(q, scale, zero, bits, group_size=128)
+    v2 = {**v1, "qzeros": qzeros_v1_to_v2(v1["qzeros"], bits)}
+    assert torch.equal(unpack_rows(v2["qzeros"].T.contiguous(), bits).T, zero.T.to(torch.int64))
+    assert torch.equal(from_gptq(v2, checkpoint_format="gptq_v2"), q)
+    assert not torch.equal(from_gptq(v2, checkpoint_format="gptq"), q)  # the format flag matters
+
+
+def test_convert_folder_to_v2_keeps_every_weight(tmp_path):
+    from safetensors.torch import save_file
+
+    from linguaprune.export import convert_to_gptq_v2
+    from linguaprune.streaming import CheckpointReader
+
+    torch.manual_seed(0)
+    q3, s3, z3 = rtn_quantize(torch.randn(64, 256), 3, group_size=128)
+    q4, s4, z4 = rtn_quantize(torch.randn(32, 128), 4, group_size=128)
+    tensors = {f"a.{k}": v for k, v in to_gptq(q3, s3, z3, 3, 128).items()}
+    tensors.update({f"b.{k}": v for k, v in to_gptq(q4, s4, z4, 4, 128).items()})
+    tensors["norm.weight"] = torch.ones(8)
+    save_file(tensors, tmp_path / "model.safetensors", metadata={"format": "pt"})
+    (tmp_path / "config.json").write_text(json.dumps({"quantization_config": {"checkpoint_format": "gptq"}}))
+
+    assert convert_to_gptq_v2(tmp_path) == 2
+    reader = CheckpointReader(tmp_path)
+    assert reader.checkpoint_format == "gptq_v2"
+    assert torch.equal(reader.get("a.weight"), q3) and torch.equal(reader.get("b.weight"), q4)
+    assert torch.equal(reader.get("norm.weight"), torch.ones(8))
+    with pytest.raises(ValueError):
+        convert_to_gptq_v2(tmp_path)  # already v2

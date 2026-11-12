@@ -57,6 +57,9 @@ class CheckpointReader:
                 self.weight_map = {key: single.name for key in handle.keys()}
         self._safe_open = safe_open
         self._handles: dict[str, object] = {}
+        config_path = self.model_dir / "config.json"
+        quant = json.loads(config_path.read_text()).get("quantization_config", {}) if config_path.exists() else {}
+        self.checkpoint_format = quant.get("checkpoint_format", "gptq")
 
     def __contains__(self, key: str) -> bool:
         from linguaprune.export import quantized_base
@@ -71,7 +74,8 @@ class CheckpointReader:
             base = quantized_base(key, self.weight_map)
             if base is None:
                 raise KeyError(f"{key} not found in checkpoint {self.model_dir}")
-            return from_gptq({suffix: self._raw(f"{base}.{suffix}") for suffix in GPTQ_SUFFIXES})
+            return from_gptq({suffix: self._raw(f"{base}.{suffix}") for suffix in GPTQ_SUFFIXES},
+                             checkpoint_format=self.checkpoint_format)
         return self._raw(key)
 
     def _raw(self, key: str) -> torch.Tensor:

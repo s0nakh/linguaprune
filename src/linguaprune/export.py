@@ -10,6 +10,10 @@ Codes are packed as a little-endian bit stream: value i of a column occupies bit
 
 Experts of the same layer may have different bit widths (4/3); each module's width is declared in
 `quantization_config.dynamic` (GPTQModel convention) and is also recoverable from tensor shapes.
+
+`convert_to_gptq_v2` rewrites a checkpoint into GPTQModel's "gptq_v2" layout, which is identical except that
+`qzeros` stores the zero points themselves instead of zero minus one. GPTQModel refuses asymmetric v1
+checkpoints from other producers (older tools wrote overflowing zero points), but loads v2 directly.
 `CheckpointReader` (linguaprune.streaming) dequantizes these tensors transparently, so a written
 checkpoint can be evaluated by the same streaming code that produced it.
 """
@@ -25,6 +29,7 @@ import torch
 from torch import nn
 
 GPTQ_SUFFIXES = ("qweight", "qzeros", "scales", "g_idx")
+ZERO_OFFSET = {"gptq": 1, "gptq_v2": 0}  # stored qzeros = zero point - offset
 WORD_BITS = 32
 COPIED_FILES = ("generation_config.json", "tokenizer.json", "tokenizer_config.json", "vocab.json", "merges.txt",
                 "special_tokens_map.json", "added_tokens.json", "chat_template.jinja", "LICENSE")
@@ -103,8 +108,10 @@ def gptq_bits(tensors: dict[str, torch.Tensor]) -> int:
     return bits
 
 
-def from_gptq(tensors: dict[str, torch.Tensor]) -> torch.Tensor:
+def from_gptq(tensors: dict[str, torch.Tensor], checkpoint_format: str = "gptq") -> torch.Tensor:
     """Dequantize GPTQ tensors back to a float32 weight [out, in] (exactly the evaluated values)."""
+    if checkpoint_format not in ZERO_OFFSET:
+        raise ValueError(f"unknown checkpoint_format {checkpoint_format!r}; expected one of {sorted(ZERO_OFFSET)}")
     bits = gptq_bits(tensors)
     g_idx = tensors["g_idx"].to(torch.int64)
     in_features = g_idx.shape[0]
@@ -114,7 +121,7 @@ def from_gptq(tensors: dict[str, torch.Tensor]) -> torch.Tensor:
     if not torch.equal(g_idx, torch.arange(in_features) // group_size):
         raise ValueError("act-order checkpoints (permuted g_idx) are not supported")
     codes = unpack_rows(tensors["qweight"], bits).T.float().reshape(out_features, groups, group_size)
-    zeros = (unpack_rows(tensors["qzeros"].T.contiguous(), bits).T + 1).float()  # [groups, out]
+    zeros = (unpack_rows(tensors["qzeros"].T.contiguous(), bits).T + ZERO_OFFSET[checkpoint_format]).float()
     s, z = scales.T[..., None], zeros.T[..., None]
     return (s * (codes - z)).reshape(out_features, in_features)
 
@@ -224,3 +231,47 @@ def quantized_base(key: str, weight_map: dict) -> str | None:
     if key.endswith(".weight") and re.sub(r"\.weight$", ".qweight", key) in weight_map:
         return key[: -len(".weight")]
     return None
+
+
+def qzeros_v1_to_v2(qzeros: torch.Tensor, bits: int) -> torch.Tensor:
+    """v1 qzeros (zero - 1, packed along the output) -> v2 qzeros (zero itself, same packing)."""
+    zeros = unpack_rows(qzeros.T.contiguous(), bits) + 1  # [out, groups]
+    if zeros.max() > 2**bits - 1:
+        raise ValueError(f"zero point {int(zeros.max())} does not fit {bits} bits")
+    return pack_rows(zeros, bits).T.contiguous()
+
+
+def convert_to_gptq_v2(model_dir: str | Path) -> int:
+    """Rewrite a v1 GPTQ checkpoint folder into the gptq_v2 layout, in place, one shard at a time.
+    Only `qzeros` and `quantization_config.checkpoint_format` change; returns the number of modules converted."""
+    import os
+
+    from safetensors import safe_open
+    from safetensors.torch import save_file
+
+    model_dir = Path(model_dir)
+    config_path = model_dir / "config.json"
+    config = json.loads(config_path.read_text())
+    quant = config.get("quantization_config", {})
+    if quant.get("checkpoint_format", "gptq") != "gptq":
+        raise ValueError(f"{model_dir} is not a v1 GPTQ checkpoint (checkpoint_format={quant.get('checkpoint_format')!r})")
+    index = model_dir / "model.safetensors.index.json"
+    shards = sorted(set(json.loads(index.read_text())["weight_map"].values())) if index.exists() else ["model.safetensors"]
+    converted = 0
+    for shard in shards:
+        with safe_open(model_dir / shard, framework="pt") as handle:
+            tensors = {key: handle.get_tensor(key) for key in handle.keys()}
+            metadata = handle.metadata()
+        for key in [k for k in tensors if k.endswith(".qzeros")]:
+            base = key[: -len(".qzeros")]
+            if f"{base}.qweight" not in tensors or f"{base}.g_idx" not in tensors:
+                raise ValueError(f"{base}: qweight/g_idx must be in the same shard as qzeros")
+            bits = gptq_bits({"qweight": tensors[f"{base}.qweight"], "g_idx": tensors[f"{base}.g_idx"]})
+            tensors[key] = qzeros_v1_to_v2(tensors[key], bits)
+            converted += 1
+        temporary = model_dir / f"{shard}.v2-tmp"
+        save_file(tensors, temporary, metadata=metadata)
+        os.replace(temporary, model_dir / shard)
+    config["quantization_config"] = {**quant, "checkpoint_format": "gptq_v2"}
+    config_path.write_text(json.dumps(config, indent=2))
+    return converted
