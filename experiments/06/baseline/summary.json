@@ -1,0 +1,72 @@
+{
+  "model": "Qwen/Qwen3-30B-A3B-Instruct-2507 (Kaggle qwen-lm/qwen-3)",
+  "model_dir": "/kaggle/input/models/qwen-lm/qwen-3/transformers/30b-a3b-instruct-2507/1",
+  "versions": {
+    "python": "3.13.16",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.20.2",
+    "datasets": "4.8.5",
+    "linguaprune": "0.4.0"
+  },
+  "streamed": true,
+  "compute_dtype": "float32",
+  "layer_limit": null,
+  "fp16_gb": 61.064245248,
+  "quantization": "simulated; experts GPTQ group 128; attention RTN 8-bit; embeddings 16-bit",
+  "exam": {
+    "kazmmlu/ru": 392,
+    "kazmmlu/kk": 370,
+    "belebele/ru": 150,
+    "belebele/kk": 150,
+    "belebele/en": 150,
+    "fact/kk": 9,
+    "fact/ru": 9,
+    "fact/en": 9
+  },
+  "target": {
+    "compression": 3.5,
+    "max_ppl_growth_kk_ru": 0.02
+  },
+  "table": [
+    {
+      "config": "original",
+      "kk": 0.0,
+      "ru": 0.0,
+      "en": 0.0,
+      "kazmmlu_kk": 0.6675675675675675,
+      "kazmmlu_ru": 0.7142857142857143,
+      "memory_gb": 61.064245248,
+      "compression": 1.0,
+      "meets_target": false
+    }
+  ],
+  "belebele_accuracy": [
+    {
+      "config": "original",
+      "en": 0.9266666666666666,
+      "kk": 0.7733333333333333,
+      "ru": 0.9266666666666666
+    }
+  ],
+  "fact_accuracy": [
+    {
+      "config": "original",
+      "en": 1.0,
+      "kk": 1.0,
+      "ru": 1.0
+    }
+  ],
+  "bits_per_layer": {
+    "gptq 4-bit (kk+ru calib)": [],
+    "gptq kkru 4/3": [],
+    "gptq en 4/3 (control)": [],
+    "gptq kkru 4/3/2": []
+  },
+  "gptq_rtn_fallback_experts": {
+    "gptq 4-bit (kk+ru calib)": [],
+    "gptq kkru 4/3": [],
+    "gptq en 4/3 (control)": [],
+    "gptq kkru 4/3/2": []
+  },
+  "target_met_by": []
+}
