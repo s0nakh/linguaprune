@@ -61,7 +61,7 @@ All raw scores, per question: [`experiments/06/full/`](experiments/06/full/). Th
 ## 💡 Why
 
 Sovereign and multilingual MoE models are huge, and Kazakh users rarely need what an English-centric compression keeps.
-A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.5 GB it fits one 24 GB consumer card.
+A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.5 GB the weights would fit a 24 GB consumer card, but common runtimes cannot yet run different bit widths for experts of the same layer; that is part of the next step.
 
 The open question is *which* weights can lose precision without hurting a low-resource language.
 Standard quantizers calibrate on English text. We show on Qwen3 that this choice alone costs Kazakh 16× more quality at the same memory.
