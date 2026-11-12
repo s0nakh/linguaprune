@@ -34,14 +34,23 @@ First target: Kazakh 🇰🇿 + Russian.
 
 ## 🏆 Result
 
-**Qwen3-30B-A3B goes from 61 GB to 15.5 GB (3.9× smaller) while Kazakh and Russian perplexity grow by about 1%.** No exam (KazMMLU, Belebele, factual probes) shows a statistically significant loss.
+**Qwen3-30B-A3B goes from 61 GB to a real 15.24 GB file (4.0× smaller) while Kazakh perplexity grows by 1.3% and Russian by 0.4%.** Every number in this table is scored from the written file, not from a simulation.
 
-| Configuration (Qwen3-30B-A3B) | Memory | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
+| Qwen3-30B-A3B | On disk | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru / en |
 |---|---|---|---|---|---|---|
-| Original (16-bit) | 61.1 GB | — | — | 66.8% | 71.4% | 77.3% / 92.7% |
+| Original (16-bit) | 61.1 GB | — | — | 66.8% | 71.4% | 77.3% / 92.7% / 92.7% |
+| **kk+ru 4/3-bit** (90% of kk+ru traffic at 4 bits) | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | **65.1%** | **70.9%** | **78.7% / 91.3% / 93.3%** |
+| kk+ru 4-bit | 17.39 GB · 3.5× | +1.2% | +1.4% | 64.9% | 71.7% | 76.0% / 92.7% / 94.0% |
+
+The file uses the standard GPTQ layout. Scoring it from disk gives exactly the same answers as the model in memory (largest difference 0.0). Data: [`experiments/07/full/`](experiments/07/full/).
+
+**Why the language matters.** At equal memory, choosing bits and calibration by English text instead of Kazakh and Russian costs Kazakh 16× more (notebook 06, same pipeline, before the file format):
+
+| Configuration (notebook 06) | Memory | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
+|---|---|---|---|---|---|---|
 | Uniform 4-bit, kk+ru calibration | 17.6 GB · 3.5× | +1.7% | +1.9% | 65.1% | 70.9% | 77.3% / 93.3% |
-| **kk+ru 4/3-bit, 90% of traffic at 4 bits** | **15.5 GB · 3.9×** | **+0.9%** | **+1.0%** | **64.1%** | **71.7%** | **77.3% / 92.7%** |
-| **kk+ru 4/3-bit, 80% of traffic at 4 bits** | **15.0 GB · 4.1×** | **−0.4%** | **−0.9%** | **64.9%** | **69.4%** | **77.3% / 89.3%** |
+| kk+ru 4/3-bit, 90% of traffic at 4 bits | 15.5 GB · 3.9× | +0.9% | +1.0% | 64.1% | 71.7% | 77.3% / 92.7% |
+| kk+ru 4/3-bit, 80% of traffic at 4 bits | 15.0 GB · 4.1× | −0.4% | −0.9% | 64.9% | 69.4% | 77.3% / 89.3% |
 | English 4/3-bit (control, same memory) | 15.5 GB · 3.9× | +14.3% | +8.3% | 67.0% | 72.2% | 74.7% / 91.3% |
 
 <img src="assets/qwen3_result.png" alt="Perplexity growth for Kazakh and Russian per configuration" width="820">
@@ -52,16 +61,16 @@ First target: Kazakh 🇰🇿 + Russian.
 
 > [!WARNING]
 > **What this result is not (yet):**
-> - Quantization is **simulated** and memory is **computed** from the bit widths. A real low-bit file is the [next step](#roadmap).
-> - KazMMLU for Kazakh trends down by 2–3 points in every kk+ru configuration (paired 95% CI for the 90% variant: −5.4 to 0.0 points, McNemar p = 0.08). That is not significant on 370 questions, so the full KazMMLU run comes next.
+> - The file is tested only with this package's own loader. Loading in vLLM and other runtimes, and speed, are the [next step](#roadmap).
+> - KazMMLU for Kazakh trends down: −1.6 points for the file, −2.7 in notebook 06 (paired 95% CI −5.4 to 0.0, McNemar p = 0.08). That is not significant on 370 questions, so the full KazMMLU run comes next.
 > - One model, one seed, 762 KazMMLU questions and 150 Belebele passages per language.
 
-All raw scores, per question: [`experiments/06/full/`](experiments/06/full/). The paired tests are in the [research log](docs/research-log.md#2026-11-12--06--qwen3-30b-a3b-compressed-4).
+All raw scores, per question: [`experiments/07/full/`](experiments/07/full/) and [`experiments/06/full/`](experiments/06/full/). The paired tests are in the [research log](docs/research-log.md#2026-11-12--06--qwen3-30b-a3b-compressed-4).
 
 ## 💡 Why
 
 Sovereign and multilingual MoE models are huge, and Kazakh users rarely need what an English-centric compression keeps.
-A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.5 GB the weights would fit a 24 GB consumer card, but common runtimes cannot yet run different bit widths for experts of the same layer; that is part of the next step.
+A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.24 GB the weights would fit a 24 GB consumer card, but common runtimes cannot yet run different bit widths for experts of the same layer; that is part of the next step.
 
 The open question is *which* weights can lose precision without hurting a low-resource language.
 Standard quantizers calibrate on English text. We show on Qwen3 that this choice alone costs Kazakh 16× more quality at the same memory.
@@ -106,7 +115,8 @@ Every compressed model is compared **per question** with the original (paired bo
 | 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Does a physically smaller checkpoint match? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
 | 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | Mixed precision by kk+ru traffic (round-to-nearest) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/04_language_aware_quantization.ipynb) |
 | 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ calibrated on kk+ru, layer by layer | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
-| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | **The result above:** Qwen3-30B-A3B on a free T4 | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
+| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B on a free T4: which bits, which calibration | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
+| 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
 
 Notebooks are bilingual: English first, Russian below each text cell.
 To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
@@ -230,8 +240,9 @@ Data: [`experiments/06/`](experiments/06/)
 ✅ done · 🔥 next · ⬜ planned
 
 - ✅ 01–05 · Routing profile, pruning, physical removal, mixed precision, GPTQ on OLMoE
-- ✅ 06 · **Qwen3-30B-A3B: 3.9× smaller, kk/ru within 1%**, on a free T4
-- 🔥 Real low-bit file on Hugging Face (not simulated), with measured size and speed
+- ✅ 06 · Qwen3-30B-A3B: at equal memory, English calibration costs Kazakh 16× more than kk+ru
+- ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
+- 🔥 Run the file in vLLM and other runtimes; measure speed; compare with popular 4-bit versions
 - ⬜ Full KazMMLU and MERA to settle the 2–3 point trend for Kazakh
 - ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
