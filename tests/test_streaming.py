@@ -94,3 +94,30 @@ def test_calibration_inputs_are_per_configuration_and_never_the_exam(tmp_path):
         assert seen[("original", index)] == 0  # no calibration set -> no inputs
         assert seen[("a", index)] == 5
         assert seen[("b", index)] == 12 + 3
+
+
+def test_gptq_and_rtn_plans_run_end_to_end_through_streaming(tmp_path):
+    import numpy as np
+
+    from linguaprune.gptq import make_quantization_prepare
+
+    torch.manual_seed(0)
+    config = tiny_config("olmoe")
+    config.hidden_size, config.intermediate_size = 128, 128  # group size 128 must divide the input dims
+    AutoModelForCausalLM.from_config(config, dtype=torch.float32).save_pretrained(tmp_path)
+    gen = torch.Generator().manual_seed(2)
+    make = lambda n: ScoredSequence(ids=tuple(torch.randint(1, 128, (n,), generator=gen).tolist()), span=(1, n))
+    exam = [make(16) for _ in range(4)]
+    calib = [make(32) for _ in range(8)]
+    streamed = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
+    bits = np.full((3, 8), 3)
+    prepare, stats = make_quantization_prepare(streamed, {"rtn": {"method": "rtn", "bits": bits},
+                                                          "gptq": {"method": "gptq", "bits": bits}},
+                                               min_tokens=1, log=lambda _: None)
+    out = stream_evaluate(streamed, exam, ["original", "rtn", "gptq"], prepare=prepare,
+                          calibration={"gptq": calib}, log=lambda _: None)
+    assert len(stats["gptq"]) == 3 and stats["rtn"] == []
+    assert sum(stats["gptq"][0]["tokens_per_expert"]) == 8 * 32 * 2  # every calibration token, top-2
+    for name in ("rtn", "gptq"):
+        assert all(np.isfinite(s.span_logprob) for s in out[name])
+        assert any(abs(a.span_logprob - b.span_logprob) > 1e-6 for a, b in zip(out[name], out["original"]))

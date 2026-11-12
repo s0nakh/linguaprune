@@ -137,3 +137,39 @@ def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_
         stats[stage] = counts
     return {"tokens_per_expert": stats["gate_up"].tolist(),
             "rtn_fallback_experts": int((stats["gate_up"] < min_tokens).sum())}
+
+
+def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int = 128,
+                              attention_bits: int | None = 8, min_tokens: int = 16,
+                              log: Callable[[str], None] = print) -> tuple[Callable, dict]:
+    """Build a `prepare` callback for `stream_evaluate`.
+
+    plans[config] = {"method": "gptq" | "rtn", "bits": array [layers, experts]}; configurations
+    without a plan (e.g. "original") are left untouched. Returns (prepare, stats), where stats
+    collects per-layer calibration token counts for GPTQ configurations.
+    """
+    stats: dict[str, list[dict]] = {name: [] for name in plans}
+
+    def prepare(config: str, index: int, layer: nn.Module, inputs) -> None:
+        plan = plans.get(config)
+        if plan is None:
+            return
+        bits = np.asarray(plan["bits"])[index]
+        if plan["method"] == "rtn":
+            if attention_bits is not None:
+                for name in ATTENTION_PROJECTIONS:
+                    proj = getattr(layer.self_attn, name)
+                    proj.weight.copy_(fake_quantize(proj.weight, attention_bits, group_size))
+            for param in (layer.mlp.experts.gate_up_proj, layer.mlp.experts.down_proj):
+                for e, b in enumerate(bits):
+                    param[e].copy_(fake_quantize(param[e], int(b), group_size))
+        elif plan["method"] == "gptq":
+            layer_stats = quantize_layer_gptq_(
+                layer, bits, inputs, lambda h, m: streamed.run_layer(index, h, m),
+                group_size=group_size, min_tokens=min_tokens, attention_bits=attention_bits)
+            stats[config].append(layer_stats)
+            log(f"  {config}: layer {index} GPTQ, {layer_stats['rtn_fallback_experts']} experts fell back to RTN")
+        else:
+            raise ValueError(f"unknown method {plan['method']!r} for {config}")
+
+    return torch.no_grad()(prepare), stats
