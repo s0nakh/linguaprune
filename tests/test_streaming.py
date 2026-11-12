@@ -121,3 +121,33 @@ def test_gptq_and_rtn_plans_run_end_to_end_through_streaming(tmp_path):
     for name in ("rtn", "gptq"):
         assert all(np.isfinite(s.span_logprob) for s in out[name])
         assert any(abs(a.span_logprob - b.span_logprob) > 1e-6 for a, b in zip(out[name], out["original"]))
+
+
+def test_bits_can_be_chosen_per_layer_from_live_router_traffic(tmp_path):
+    import numpy as np
+
+    from linguaprune.gptq import make_quantization_prepare, router_traffic
+    from linguaprune.quant import allocate_bits_by_coverage
+
+    torch.manual_seed(0)
+    config = tiny_config("qwen3_moe")
+    config.hidden_size, config.moe_intermediate_size, config.head_dim = 128, 128, 32
+    AutoModelForCausalLM.from_config(config, dtype=torch.float32).save_pretrained(tmp_path)
+    gen = torch.Generator().manual_seed(3)
+    make = lambda n: ScoredSequence(ids=tuple(torch.randint(1, 128, (n,), generator=gen).tolist()), span=(1, n))
+    calib = [make(24) for _ in range(6)]
+    seen = []
+
+    def live_bits(cfg, index, layer, inputs, run_layer):
+        traffic = router_traffic(layer, inputs, run_layer)
+        seen.append(int(traffic.sum()))
+        return allocate_bits_by_coverage(traffic[None, :].astype(float), (0.8,), (4, 3))[0]
+
+    streamed = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
+    prepare, stats = make_quantization_prepare(streamed, {"live": {"method": "gptq", "bits": live_bits}},
+                                               min_tokens=1, log=lambda _: None)
+    out = stream_evaluate(streamed, [make(10)], ["original", "live"], prepare=prepare,
+                          calibration={"live": calib}, log=lambda _: None)
+    assert seen == [6 * 24 * 2] * 3  # every calibration token, top-2, in each of 3 layers
+    assert all(set(s["bits"]) <= {3, 4} and 4 in s["bits"] for s in stats["live"])
+    assert np.isfinite(out["live"][0].span_logprob)

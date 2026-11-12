@@ -171,14 +171,26 @@ def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_
             "rtn_fallback_experts": int((stats["gate_up"] < min_tokens).sum())}
 
 
+@torch.no_grad()
+def router_traffic(layer: nn.Module, inputs, run_layer) -> np.ndarray:
+    """How many calibration tokens the router sends to each expert of this layer (top-k picks)."""
+    num_experts = layer.mlp.gate.weight.shape[0]
+    counts = np.zeros(num_experts, dtype=np.int64)
+    for x in _capture_moe_inputs(layer, inputs, run_layer):
+        _, _, chosen = layer.mlp.gate(x)
+        counts += np.bincount(chosen.reshape(-1).cpu().numpy(), minlength=num_experts)
+    return counts
+
+
 def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int = 128,
                               attention_bits: int | None = 8, min_tokens: int = 16,
                               log: Callable[[str], None] = print) -> tuple[Callable, dict]:
     """Build a `prepare` callback for `stream_evaluate`.
 
-    plans[config] = {"method": "gptq" | "rtn", "bits": array [layers, experts]}; configurations
-    without a plan (e.g. "original") are left untouched. Returns (prepare, stats), where stats
-    collects per-layer calibration token counts for GPTQ configurations.
+    plans[config] = {"method": "gptq" | "rtn", "bits": array [layers, experts] or a callable
+    bits(config, layer_index, layer, inputs, run_layer) -> array [experts]} (the callable form lets bits
+    depend on router traffic measured in the same streamed run). Configurations without a plan (e.g.
+    "original") are left untouched. Returns (prepare, stats); stats collects per-layer GPTQ details.
     """
     stats: dict[str, list[dict]] = {name: [] for name in plans}
 
@@ -186,7 +198,9 @@ def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int 
         plan = plans.get(config)
         if plan is None:
             return
-        bits = np.asarray(plan["bits"])[index]
+        run_layer = lambda h, m: streamed.run_layer(index, h, m)
+        bits = (plan["bits"](config, index, layer, inputs, run_layer) if callable(plan["bits"])
+                else np.asarray(plan["bits"])[index])
         if plan["method"] == "rtn":
             if attention_bits is not None:
                 for name in ATTENTION_PROJECTIONS:
@@ -197,9 +211,9 @@ def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int 
                     param[e].copy_(fake_quantize(param[e], int(b), group_size))
         elif plan["method"] == "gptq":
             layer_stats = quantize_layer_gptq_(
-                layer, bits, inputs, lambda h, m: streamed.run_layer(index, h, m),
+                layer, bits, inputs, run_layer,
                 group_size=group_size, min_tokens=min_tokens, attention_bits=attention_bits)
-            stats[config].append(layer_stats)
+            stats[config].append({**layer_stats, "bits": np.asarray(bits).tolist()})
             log(f"  {config}: layer {index} GPTQ, {layer_stats['rtn_fallback_experts']} experts fell back to RTN")
         else:
             raise ValueError(f"unknown method {plan['method']!r} for {config}")
