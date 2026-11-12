@@ -1,4 +1,4 @@
-"""LinguaPrune: language-aware expert pruning for Mixture-of-Experts LLMs."""
+"""LinguaPrune: language-aware compression for Mixture-of-Experts LLMs."""
 
 from linguaprune.pruning import (
     MoEBlock,
@@ -23,7 +23,7 @@ from linguaprune.quant import (
     snapshot_experts,
 )
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     "allocate_bits_by_coverage",
