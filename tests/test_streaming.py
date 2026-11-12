@@ -75,3 +75,22 @@ def test_prepare_changes_only_its_configuration_exactly(tmp_path):
     assert out["original"][0].choice_logits == pytest.approx(original_choices, abs=1e-4)
     assert out["scaled"][0].span_logprob == pytest.approx(scaled_logprob, abs=1e-4)
     assert out["scaled"][0].choice_logits == pytest.approx(scaled_choices, abs=1e-4)
+
+
+def test_calibration_inputs_are_per_configuration_and_never_the_exam(tmp_path):
+    torch.manual_seed(0)
+    AutoModelForCausalLM.from_config(tiny_config("qwen3_moe"), dtype=torch.float32).save_pretrained(tmp_path)
+    exam = [ScoredSequence(ids=tuple(range(1, 9)), span=(1, 8))]
+    calib = {"a": [ScoredSequence(ids=tuple(range(10, 15)))],
+             "b": [ScoredSequence(ids=tuple(range(20, 32))), ScoredSequence(ids=tuple(range(40, 43)))]}
+    seen = {}
+
+    def record(cfg, index, layer, inputs):
+        seen[(cfg, index)] = sum(int(mask.sum()) for _, mask in inputs())
+
+    streamed = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
+    stream_evaluate(streamed, exam, ["original", "a", "b"], prepare=record, calibration=calib, log=lambda _: None)
+    for index in range(3):
+        assert seen[("original", index)] == 0  # no calibration set -> no inputs
+        assert seen[("a", index)] == 5
+        assert seen[("b", index)] == 12 + 3

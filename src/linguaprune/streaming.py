@@ -196,34 +196,44 @@ PrepareFn = Callable[[str, int, nn.Module, Callable[[], Iterator[tuple[torch.Ten
 
 def stream_evaluate(streamed: StreamedModel, sequences: Sequence[ScoredSequence], configs: Sequence[str],
                     prepare: PrepareFn | None = None, max_tokens: int = 8192,
-                    log: Callable[[str], None] = print, layer_limit: int | None = None) -> dict[str, list[SequenceScore]]:
+                    log: Callable[[str], None] = print, layer_limit: int | None = None,
+                    calibration: dict[str, Sequence[ScoredSequence]] | None = None) -> dict[str, list[SequenceScore]]:
     """Score `sequences` under every configuration, streaming one layer at a time.
 
     `prepare(config, layer_index, layer_module, inputs)` is called for every configuration after the
     original layer weights are loaded and before the layer runs; it may modify the weights in place.
-    `inputs()` yields (hidden, attention_mask) of this configuration at this layer, for calibration.
+    `inputs()` yields (hidden, attention_mask) of **that configuration's calibration sequences** at this
+    layer (`calibration[config]`, never the evaluation sequences), so calibration cannot see the exam.
     `layer_limit` runs only the first N layers — for timing dry runs; the scores are then meaningless.
     """
-    batches = make_batches(sequences, max_tokens, pad_id=int(streamed.config.pad_token_id or 0))
-    hidden = {c: [streamed.embed(ids).cpu() for _, ids, _ in batches] for c in configs}
+    pad_id = int(streamed.config.pad_token_id or 0)
+    calibration = calibration or {}
+    eval_batches = make_batches(sequences, max_tokens, pad_id)
+    calib_batches = {c: make_batches(calibration[c], max_tokens, pad_id) for c in configs if calibration.get(c)}
+    hidden = {c: [streamed.embed(ids).cpu() for _, ids, _ in eval_batches] for c in configs}
+    calib_hidden = {c: [streamed.embed(ids).cpu() for _, ids, _ in b] for c, b in calib_batches.items()}
     num_layers = streamed.num_layers if layer_limit is None else min(layer_limit, streamed.num_layers)
     for index in range(num_layers):
         original = streamed.read_layer_state(index)
         for config in configs:
             materialize_(streamed.layers[index], original, streamed.device)
+            batches_c = calib_batches.get(config, [])
             if prepare is not None:
-                def inputs(config=config):
-                    for (_, _, mask), h in zip(batches, hidden[config]):
+                def inputs(config=config, batches_c=batches_c):
+                    for (_, _, mask), h in zip(batches_c, calib_hidden.get(config, [])):
                         yield h.to(streamed.device), mask
                 prepare(config, index, streamed.layers[index], inputs)
             hidden[config] = [streamed.run_layer(index, h.to(streamed.device), mask).cpu()
-                              for (_, _, mask), h in zip(batches, hidden[config])]
+                              for (_, _, mask), h in zip(eval_batches, hidden[config])]
+            if config in calib_hidden:
+                calib_hidden[config] = [streamed.run_layer(index, h.to(streamed.device), mask).cpu()
+                                        for (_, _, mask), h in zip(batches_c, calib_hidden[config])]
         streamed.layers[index].to("meta")
         log(f"layer {index + 1}/{num_layers} done")
     results = {}
     for config in configs:
         scores: list[SequenceScore | None] = [None] * len(sequences)
-        for (members, _, _), h in zip(batches, hidden[config]):
+        for (members, _, _), h in zip(eval_batches, hidden[config]):
             for i, s in zip(members, streamed.score(h.to(streamed.device), [sequences[i] for i in members])):
                 scores[i] = s
         results[config] = scores
