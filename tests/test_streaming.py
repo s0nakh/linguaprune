@@ -51,19 +51,27 @@ def test_streamed_scores_match_normal_forward(tmp_path, kind):
         assert got.choice_logits == pytest.approx(want_choices, abs=1e-4)
 
 
-def test_prepare_can_change_one_configuration_only(tmp_path):
+def test_prepare_changes_only_its_configuration_exactly(tmp_path):
     torch.manual_seed(0)
-    AutoModelForCausalLM.from_config(tiny_config("olmoe"), dtype=torch.float32).save_pretrained(tmp_path)
-    sequences = [ScoredSequence(ids=tuple(range(1, 11)), span=(1, 10), choice_ids=(3,))]
+    model = AutoModelForCausalLM.from_config(tiny_config("olmoe"), dtype=torch.float32).eval()
+    model.save_pretrained(tmp_path)
+    seq = ScoredSequence(ids=tuple(range(1, 11)), span=(1, 10), choice_ids=(3, 4))
 
-    def zero_experts(cfg, index, layer, inputs):
-        if cfg == "broken":  # tiny random experts barely matter, so scale them up hard
+    def scale_experts(cfg, index, layer, inputs):
+        if cfg == "scaled":
             with torch.no_grad():
                 layer.mlp.experts.down_proj.mul_(200.0)
 
     streamed = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
-    out = stream_evaluate(streamed, sequences, ["original", "broken"], prepare=zero_experts, log=lambda _: None)
-    assert abs(out["original"][0].span_logprob - out["broken"][0].span_logprob) > 1.0
-    fresh = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
-    again = stream_evaluate(fresh, sequences, ["original"], log=lambda _: None)
-    assert again["original"][0].span_logprob == pytest.approx(out["original"][0].span_logprob, abs=1e-6)
+    out = stream_evaluate(streamed, [seq], ["original", "scaled"], prepare=scale_experts, log=lambda _: None)
+
+    original_logprob, original_choices = reference_scores(model, seq)
+    with torch.no_grad():
+        for layer in model.model.layers:
+            layer.mlp.experts.down_proj.mul_(200.0)
+    scaled_logprob, scaled_choices = reference_scores(model, seq)
+
+    assert out["original"][0].span_logprob == pytest.approx(original_logprob, abs=1e-4)
+    assert out["original"][0].choice_logits == pytest.approx(original_choices, abs=1e-4)
+    assert out["scaled"][0].span_logprob == pytest.approx(scaled_logprob, abs=1e-4)
+    assert out["scaled"][0].choice_logits == pytest.approx(scaled_choices, abs=1e-4)
