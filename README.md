@@ -129,6 +129,24 @@ Raw numbers: [`experiments/03/summary.json`](experiments/03/summary.json).
 
 Raw numbers: [`experiments/04/`](experiments/04/).
 
+**Notebook 05 — GPTQ calibrated on kk+ru, run layer by layer.** Same exam and target; attention is 8-bit:
+
+| Configuration (OLMoE) | kk | ru | en | Memory |
+|---|---|---|---|---|
+| RTN 4-bit | +6.6% | +4.5% | +15.2% | 4.12 GB (3.4×) |
+| **GPTQ 4-bit, kk+ru calibration** | **+1.5%** | **+1.5%** | −1.1% | 4.12 GB (3.4×) |
+| **GPTQ kk+ru 4/3** | **+2.2%** | +4.4% | +18.7% | 3.57 GB (3.9×) |
+| GPTQ English 4/3 (same memory) | +20.2% | +13.4% | −9.2% | 3.57 GB (3.9×) |
+| **GPTQ kk+ru 4/3/2** | **+2.0%** | +18.4% | +287% | 3.04 GB (4.6×) |
+
+- **GPTQ cuts the loss 3–4× vs. round-to-nearest.** The quantizer was the bottleneck.
+- **Calibration language decides the result:** at equal memory, English calibration loses +20% on Kazakh, kk+ru loses +2%.
+- **Kazakh stays within ~2% even at 4.6×; Russian is the weak spot.** Kazakh concentrates on few experts and takes the 4-bit slots.
+
+Raw numbers: [`experiments/05/`](experiments/05/).
+
+**Qwen3-30B-A3B baseline (step 06), streamed on a free T4.** 61 GB of weights, 48 layers, **15 minutes**. The model knows Kazakh: KazMMLU **66.8%** kk / **71.4%** ru (~380 questions each), Belebele accuracy 92.7% kk, factual probes 3/3 in every language. Raw numbers: [`experiments/06/baseline/`](experiments/06/baseline/).
+
 ## How it works
 
 ```
@@ -169,9 +187,9 @@ Notebooks are bilingual: English first, Russian translation below each text cell
 - ✅ 02 · Quality after pruning (Belebele kk/ru/en)
 - ✅ 03 · Physically remove experts, save the smaller model, verify it matches the masked results
 - ✅ 04 · Language-aware mixed-precision allocation (simulated RTN): works vs. English/random, target not met
-- 🔥 **05 · GPTQ calibrated on kk+ru for experts + 8-bit attention, same target** — *in progress*
-- ⬜ 06 · Real low-bit file format and a run on an 8 GB laptop
-- ⬜ 07 · Same pipeline on Qwen3-30B-A3B
+- ✅ 05 · GPTQ calibrated on kk+ru, streamed layer by layer: Kazakh within ~2% up to 4.6×, Russian is the weak spot
+- 🔥 **06 · Qwen3-30B-A3B on free Kaggle GPUs: baseline done, compression run** — *in progress*
+- ⬜ 07 · Real low-bit file format and a run on a laptop
 - ⬜ 08 · Full benchmark (KazMMLU, Belebele accuracy, MERA) on a model that is strong in Kazakh
 - ⬜ REAP-style importance (gate × expert output norm) and per-layer budgets
 - ⬜ Prune + 4-bit vs. uniform 2–3-bit quantization **at equal memory**

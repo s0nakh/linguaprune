@@ -1,0 +1,232 @@
+{
+  "model": "allenai/OLMoE-1B-7B-0125",
+  "model_revision": "9b0c1aa87e34a20052389dce1f0cf01da783f654",
+  "versions": {
+    "python": "3.13.16",
+    "torch": "2.11.0+cu130",
+    "transformers": "5.20.2",
+    "datasets": "4.8.5",
+    "linguaprune": "0.3.1"
+  },
+  "streamed": true,
+  "compute_dtype": "float32",
+  "layer_limit": null,
+  "quantization": "simulated; experts GPTQ or RTN, group 128; attention RTN 8-bit; embeddings fp16",
+  "calibration": {
+    "kk+ru docs": 128,
+    "en docs": 128,
+    "max_tokens": 512
+  },
+  "target": {
+    "compression": 3.5,
+    "max_ppl_growth_kk_ru": 0.02
+  },
+  "table": [
+    {
+      "config": "original",
+      "kk": 0.0,
+      "ru": 0.0,
+      "en": 0.0,
+      "memory_gb": 13.838323712,
+      "compression": 1.0,
+      "meets_target": false
+    },
+    {
+      "config": "rtn 4-bit",
+      "kk": 0.0661093289629513,
+      "ru": 0.045491402011852866,
+      "en": 0.15155529571260518,
+      "memory_gb": 4.11592704,
+      "compression": 3.362140187985451,
+      "meets_target": false
+    },
+    {
+      "config": "gptq 4-bit (kk+ru calib)",
+      "kk": 0.01507890988599736,
+      "ru": 0.01505968833544613,
+      "en": -0.011186371563231434,
+      "memory_gb": 4.11592704,
+      "compression": 3.362140187985451,
+      "meets_target": false
+    },
+    {
+      "config": "gptq kkru 4/3",
+      "kk": 0.022405356932724274,
+      "ru": 0.04368992744464628,
+      "en": 0.1872291104262942,
+      "memory_gb": 3.568570368,
+      "compression": 3.877834058168136,
+      "meets_target": false
+    },
+    {
+      "config": "gptq en 4/3 (control)",
+      "kk": 0.2019777011845585,
+      "ru": 0.1340328129109727,
+      "en": -0.09246242046599695,
+      "memory_gb": 3.568570368,
+      "compression": 3.877834058168136,
+      "meets_target": false
+    },
+    {
+      "config": "gptq kkru 4/3/2",
+      "kk": 0.019594247703287992,
+      "ru": 0.1844694252621606,
+      "en": 2.869983100691124,
+      "memory_gb": 3.036155904,
+      "compression": 4.557843585623724,
+      "meets_target": false
+    }
+  ],
+  "belebele_accuracy": [
+    {
+      "config": "original",
+      "en": 0.6533333333333333,
+      "kk": 0.32666666666666666,
+      "ru": 0.4
+    },
+    {
+      "config": "rtn 4-bit",
+      "en": 0.6333333333333333,
+      "kk": 0.2866666666666667,
+      "ru": 0.38666666666666666
+    },
+    {
+      "config": "gptq 4-bit (kk+ru calib)",
+      "en": 0.6666666666666666,
+      "kk": 0.2866666666666667,
+      "ru": 0.41333333333333333
+    },
+    {
+      "config": "gptq kkru 4/3",
+      "en": 0.6,
+      "kk": 0.28,
+      "ru": 0.4266666666666667
+    },
+    {
+      "config": "gptq en 4/3 (control)",
+      "en": 0.64,
+      "kk": 0.34,
+      "ru": 0.3933333333333333
+    },
+    {
+      "config": "gptq kkru 4/3/2",
+      "en": 0.2733333333333333,
+      "kk": 0.2866666666666667,
+      "ru": 0.2866666666666667
+    }
+  ],
+  "fact_accuracy": [
+    {
+      "config": "original",
+      "en": 1.0,
+      "kk": 0.0,
+      "ru": 1.0
+    },
+    {
+      "config": "rtn 4-bit",
+      "en": 1.0,
+      "kk": 0.3333333333333333,
+      "ru": 1.0
+    },
+    {
+      "config": "gptq 4-bit (kk+ru calib)",
+      "en": 1.0,
+      "kk": 0.0,
+      "ru": 1.0
+    },
+    {
+      "config": "gptq kkru 4/3",
+      "en": 0.6666666666666666,
+      "kk": 0.0,
+      "ru": 0.6666666666666666
+    },
+    {
+      "config": "gptq en 4/3 (control)",
+      "en": 1.0,
+      "kk": 0.6666666666666666,
+      "ru": 1.0
+    },
+    {
+      "config": "gptq kkru 4/3/2",
+      "en": 0.6666666666666666,
+      "kk": 0.0,
+      "ru": 0.6666666666666666
+    }
+  ],
+  "gptq_rtn_fallback_experts": {
+    "rtn 4-bit": [],
+    "gptq 4-bit (kk+ru calib)": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      14
+    ],
+    "gptq kkru 4/3": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      13
+    ],
+    "gptq en 4/3 (control)": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "gptq kkru 4/3/2": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      14
+    ]
+  },
+  "target_met_by": []
+}

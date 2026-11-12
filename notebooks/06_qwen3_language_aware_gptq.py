@@ -233,11 +233,14 @@ def english_like(template_config):
     return choose
 
 
-PLANS = {  # order matters: the English control copies the bit counts of "gptq kkru 4/3" in the same layer
+# Notebook 05 (OLMoE): kk+ru 4/3 at 80% traffic kept Kazakh within +2.2% but Russian lost +4.4% —
+# Kazakh concentrates on few experts and takes the 4-bit slots. The 90% variant protects Russian too.
+PLANS = {  # order matters: the English control copies the bit counts of "gptq kkru 4/3 @90%" in the same layer
     "gptq 4-bit (kk+ru calib)": {"method": "gptq", "bits": np.full((L, E), 4)},
-    "gptq kkru 4/3": {"method": "gptq", "bits": coverage_bits((0.8,), (4, 3))},
-    "gptq en 4/3 (control)": {"method": "gptq", "bits": english_like("gptq kkru 4/3")},
-    "gptq kkru 4/3/2": {"method": "gptq", "bits": coverage_bits((0.6, 0.9), (4, 3, 2))},
+    "gptq kkru 4/3 @80%": {"method": "gptq", "bits": coverage_bits((0.8,), (4, 3))},
+    "gptq kkru 4/3 @90%": {"method": "gptq", "bits": coverage_bits((0.9,), (4, 3))},
+    "gptq en 4/3 @90% (control)": {"method": "gptq", "bits": english_like("gptq kkru 4/3 @90%")},
+    "gptq kkru 4/3/2 @80/95%": {"method": "gptq", "bits": coverage_bits((0.8, 0.95), (4, 3, 2))},
 }
 CALIBRATION = {name: (calib_en if "(control)" in name else calib_kkru) for name in PLANS}
 CONFIGS = ["original", *PLANS]
