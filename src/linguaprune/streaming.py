@@ -117,7 +117,7 @@ class StreamedModel:
         for prefix, module in (("model.embed_tokens.", inner.embed_tokens), ("model.norm.", inner.norm),
                                ("lm_head.", self.model.lm_head)):
             materialize_(module, read_module_state(module, prefix, self.reader, self.num_experts, dtype), self.device)
-        inner.rotary_emb = type(inner.rotary_emb)(config=self.config, device=self.device)
+        inner.rotary_emb = type(inner.rotary_emb)(config=self.config).to(self.device)  # rebuilt off the meta device
         self.layers = inner.layers
 
     @property
@@ -196,16 +196,18 @@ PrepareFn = Callable[[str, int, nn.Module, Callable[[], Iterator[tuple[torch.Ten
 
 def stream_evaluate(streamed: StreamedModel, sequences: Sequence[ScoredSequence], configs: Sequence[str],
                     prepare: PrepareFn | None = None, max_tokens: int = 8192,
-                    log: Callable[[str], None] = print) -> dict[str, list[SequenceScore]]:
+                    log: Callable[[str], None] = print, layer_limit: int | None = None) -> dict[str, list[SequenceScore]]:
     """Score `sequences` under every configuration, streaming one layer at a time.
 
     `prepare(config, layer_index, layer_module, inputs)` is called for every configuration after the
     original layer weights are loaded and before the layer runs; it may modify the weights in place.
     `inputs()` yields (hidden, attention_mask) of this configuration at this layer, for calibration.
+    `layer_limit` runs only the first N layers — for timing dry runs; the scores are then meaningless.
     """
     batches = make_batches(sequences, max_tokens, pad_id=int(streamed.config.pad_token_id or 0))
     hidden = {c: [streamed.embed(ids).cpu() for _, ids, _ in batches] for c in configs}
-    for index in range(streamed.num_layers):
+    num_layers = streamed.num_layers if layer_limit is None else min(layer_limit, streamed.num_layers)
+    for index in range(num_layers):
         original = streamed.read_layer_state(index)
         for config in configs:
             materialize_(streamed.layers[index], original, streamed.device)
@@ -217,7 +219,7 @@ def stream_evaluate(streamed: StreamedModel, sequences: Sequence[ScoredSequence]
             hidden[config] = [streamed.run_layer(index, h.to(streamed.device), mask).cpu()
                               for (_, _, mask), h in zip(batches, hidden[config])]
         streamed.layers[index].to("meta")
-        log(f"layer {index + 1}/{streamed.num_layers} done")
+        log(f"layer {index + 1}/{num_layers} done")
     results = {}
     for config in configs:
         scores: list[SequenceScore | None] = [None] * len(sequences)
