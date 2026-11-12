@@ -373,6 +373,12 @@ tags: [gptq, moe, quantized, kazakh, russian, linguaprune]
 
 # {repo}
 
+> [!WARNING]
+> **Research checkpoint. For now it can only be read by [LinguaPrune](https://github.com/s0nakh/linguaprune), and only for scoring text, not for chat.**
+> {"Experts in this model have different bit widths (4 and 3 bits); attention is 8-bit." if mixed else "Experts are 4-bit, attention is 8-bit."} Per-module widths are declared in `quantization_config.dynamic`.
+> Standard runtimes (transformers, vLLM, AutoGPTQ, llama.cpp) are **not tested**. A runtime that ignores `dynamic` may refuse the file or, worse, load it silently and produce garbage.
+> A runtime-compatible release with text generation is the next step.
+
 [{BASE_MODEL}](https://huggingface.co/{BASE_MODEL}) compressed with **language-aware GPTQ** for Kazakh and Russian
 by [LinguaPrune](https://github.com/s0nakh/linguaprune). Every expert is GPTQ-quantized with calibration on Kazakh +
 Russian Wikipedia; {"experts that carry 90% of kk+ru router traffic keep 4 bits, the rest get 3 bits" if mixed else "all experts use 4 bits"}.
@@ -392,8 +398,11 @@ All numbers are measured **from these files** ({int((df.task == "kazmmlu").sum()
 ## Format
 
 Standard GPTQ checkpoint (`qweight` / `qzeros` / `scales` / `g_idx`, group size {GROUP_SIZE}, asymmetric, no act-order).
-{"Experts of the same layer have different bit widths, declared in `quantization_config.dynamic`. Most runtimes cannot run mixed widths inside one MoE layer yet; use the LinguaPrune reader below." if mixed else "8-bit attention is declared in `quantization_config.dynamic`."}
+{"Experts of the same layer have different bit widths, declared in `quantization_config.dynamic`. Most runtimes cannot run mixed widths inside one MoE layer yet." if mixed else "8-bit attention is declared in `quantization_config.dynamic`."}
 Compatibility with vLLM and other runtimes is **not tested yet**.
+
+The LinguaPrune reader below runs the model layer by layer and returns log-probabilities of given text
+(this is how every number above was measured). It does not generate text.
 
 ```bash
 pip install "git+https://github.com/s0nakh/linguaprune@{LINGUAPRUNE_REF}"
@@ -404,12 +413,13 @@ from huggingface_hub import snapshot_download
 from linguaprune.streaming import StreamedModel  # layer-by-layer evaluation, fits a small GPU
 
 model = StreamedModel(snapshot_download("{HF_USER}/{repo}"), device="cuda")
+# score text with linguaprune.streaming.stream_evaluate(model, sequences, ["model"]); see notebook 07
 ```
 
 ## Limitations
 
-One model, one seed. Kazakh KazMMLU trends 2–3 points lower than the original in notebook 06 (not significant on
-~370 questions). The license of the base model (Apache-2.0) applies.
+One model, one seed. Kazakh KazMMLU is {100 * (base.kazmmlu_kk - row.kazmmlu_kk):.1f} points lower than the original here
+(not significant on ~370 questions; the full KazMMLU run is planned). The license of the base model (Apache-2.0) applies.
 """
 
 
