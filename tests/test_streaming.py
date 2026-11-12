@@ -57,13 +57,13 @@ def test_prepare_can_change_one_configuration_only(tmp_path):
     sequences = [ScoredSequence(ids=tuple(range(1, 11)), span=(1, 10), choice_ids=(3,))]
 
     def zero_experts(cfg, index, layer, inputs):
-        if cfg == "broken":
+        if cfg == "broken":  # tiny random experts barely matter, so scale them up hard
             with torch.no_grad():
-                layer.mlp.experts.down_proj.zero_()
+                layer.mlp.experts.down_proj.mul_(200.0)
 
     streamed = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
     out = stream_evaluate(streamed, sequences, ["original", "broken"], prepare=zero_experts, log=lambda _: None)
-    assert out["original"][0].span_logprob != pytest.approx(out["broken"][0].span_logprob, abs=1e-3)
+    assert abs(out["original"][0].span_logprob - out["broken"][0].span_logprob) > 1.0
     fresh = StreamedModel(tmp_path, device="cpu", dtype=torch.float32)
     again = stream_evaluate(fresh, sequences, ["original"], log=lambda _: None)
     assert again["original"][0].span_logprob == pytest.approx(out["original"][0].span_logprob, abs=1e-6)
