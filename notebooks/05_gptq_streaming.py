@@ -43,7 +43,7 @@
 import subprocess
 import sys
 
-LINGUAPRUNE_REF = "v0.3.0"  # pinned release of the linguaprune package
+LINGUAPRUNE_REF = "v0.3.1"  # pinned release of the linguaprune package
 subprocess.check_call([sys.executable, "-m", "pip", "install", "-q",
                        f"git+https://github.com/s0nakh/linguaprune@{LINGUAPRUNE_REF}"])
 

@@ -31,6 +31,17 @@ def _quantize_column(column: torch.Tensor, scale: torch.Tensor, zero: torch.Tens
     return scale * (q - zero)
 
 
+def _upper_cholesky_of_inverse(h: torch.Tensor, eye: torch.Tensor) -> torch.Tensor:
+    """Upper Cholesky factor of H⁻¹ for one matrix, via triangular solves.
+
+    Done one matrix at a time on purpose: batched `cholesky_inverse` goes through MAGMA's batched
+    potrs, which crashed with an illegal memory access on Kaggle T4 (CUDA 13) for 64×2048×2048 inputs.
+    """
+    lower = torch.linalg.cholesky(h)
+    lower_inv = torch.linalg.solve_triangular(lower, eye, upper=False)
+    return torch.linalg.cholesky(lower_inv.T @ lower_inv, upper=True)
+
+
 @torch.no_grad()
 def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int, group_size: int = 128,
                           damp: float = 0.01, block_size: int = 128) -> torch.Tensor:
@@ -49,7 +60,14 @@ def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int
     W.masked_fill_(dead.unsqueeze(1), 0.0)
     eye = torch.eye(cols, device=H.device)
     H += (damp * diag.mean(dim=-1)).view(batch, 1, 1) * eye
-    Hinv = torch.linalg.cholesky(torch.cholesky_inverse(torch.linalg.cholesky(H)), upper=True)
+    previous = torch.backends.cuda.preferred_linalg_library() if H.is_cuda else None
+    if H.is_cuda:
+        torch.backends.cuda.preferred_linalg_library("cusolver")  # avoid MAGMA (see _upper_cholesky_of_inverse)
+    try:
+        Hinv = torch.stack([_upper_cholesky_of_inverse(h, eye) for h in H])
+    finally:
+        if previous is not None:
+            torch.backends.cuda.preferred_linalg_library(previous)
     Q = torch.zeros_like(W)
     scale = zero = None
     for i1 in range(0, cols, block_size):

@@ -88,3 +88,12 @@ def test_batched_gptq_equals_one_matrix_at_a_time():
     batched = gptq_quantize_batched(W, H, bits=3, group_size=128)
     for b in range(3):
         torch.testing.assert_close(batched[b], gptq_quantize(W[b], H[b], bits=3, group_size=128), rtol=1e-4, atol=1e-4)
+
+
+def test_inverse_factor_matches_cholesky_inverse_reference():
+    from linguaprune.gptq import _upper_cholesky_of_inverse
+
+    X = correlated_inputs(1024, 128)
+    H = X.T @ X + 0.01 * torch.eye(128)
+    reference = torch.linalg.cholesky(torch.cholesky_inverse(torch.linalg.cholesky(H)), upper=True)
+    torch.testing.assert_close(_upper_cholesky_of_inverse(H, torch.eye(128)), reference, rtol=1e-3, atol=1e-5)
