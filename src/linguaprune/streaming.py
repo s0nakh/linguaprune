@@ -59,11 +59,22 @@ class CheckpointReader:
         self._handles: dict[str, object] = {}
 
     def __contains__(self, key: str) -> bool:
-        return key in self.weight_map
+        from linguaprune.export import quantized_base
+
+        return key in self.weight_map or quantized_base(key, self.weight_map) is not None
 
     def get(self, key: str) -> torch.Tensor:
+        """A tensor by name; `x.weight` of a GPTQ-quantized module is returned dequantized (float32)."""
+        from linguaprune.export import GPTQ_SUFFIXES, from_gptq, quantized_base
+
         if key not in self.weight_map:
-            raise KeyError(f"{key} not found in checkpoint {self.model_dir}")
+            base = quantized_base(key, self.weight_map)
+            if base is None:
+                raise KeyError(f"{key} not found in checkpoint {self.model_dir}")
+            return from_gptq({suffix: self._raw(f"{base}.{suffix}") for suffix in GPTQ_SUFFIXES})
+        return self._raw(key)
+
+    def _raw(self, key: str) -> torch.Tensor:
         shard = self.weight_map[key]
         if shard not in self._handles:
             self._handles[shard] = self._safe_open(self.model_dir / shard, framework="pt")

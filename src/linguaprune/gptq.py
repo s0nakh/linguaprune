@@ -19,16 +19,38 @@ from linguaprune.quant import NO_QUANT_BITS, fake_quantize
 ATTENTION_PROJECTIONS = ("q_proj", "k_proj", "v_proj", "o_proj")
 
 
+MIN_SCALE = 2.0**-16  # exactly representable in fp16
+
+
 def _group_params(weight: torch.Tensor, bits: int) -> tuple[torch.Tensor, torch.Tensor]:
-    """Asymmetric min-max scale and zero point per row for one group of columns. weight: [..., rows, cols]."""
-    low, high = weight.amin(dim=-1), weight.amax(dim=-1)
-    scale = ((high - low) / (2**bits - 1)).clamp_min(1e-8)
-    return scale, torch.round(-low / scale)
+    """Asymmetric scale and integer zero point per row for one group of columns. weight: [..., rows, cols].
+
+    Chosen so the result is exactly storable in the standard GPTQ checkpoint format: the range always
+    contains 0 (as in AutoGPTQ), the scale is rounded to fp16, and the zero point lies in [1, 2**bits - 1]
+    (the "v1" format stores zero - 1 as an unsigned integer)."""
+    maxq = 2**bits - 1
+    low = weight.amin(dim=-1).clamp(max=0)
+    high = weight.amax(dim=-1).clamp(min=0)
+    scale = ((high - low) / maxq).clamp_min(MIN_SCALE).half().float()
+    return scale, torch.round(-low / scale).clamp(1, maxq)
 
 
 def _quantize_column(column: torch.Tensor, scale: torch.Tensor, zero: torch.Tensor, bits: int) -> torch.Tensor:
     q = torch.clamp(torch.round(column / scale) + zero, 0, 2**bits - 1)
     return scale * (q - zero)
+
+
+@torch.no_grad()
+def rtn_quantize(weight: torch.Tensor, bits: int, group_size: int = 128
+                 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Round-to-nearest on the same grid as GPTQ. weight [..., rows, cols] ->
+    (dequantized weight, scale [..., rows, groups], zero [..., rows, groups])."""
+    if weight.shape[-1] % group_size:
+        raise ValueError(f"last dimension {weight.shape[-1]} is not divisible by group_size {group_size}")
+    grouped = weight.float().reshape(*weight.shape[:-1], -1, group_size)
+    scale, zero = _group_params(grouped, bits)
+    q = torch.clamp(torch.round(grouped / scale[..., None]) + zero[..., None], 0, 2**bits - 1)
+    return (scale[..., None] * (q - zero[..., None])).reshape(weight.shape).to(weight.dtype), scale, zero
 
 
 def _upper_cholesky_of_inverse(h: torch.Tensor, eye: torch.Tensor) -> torch.Tensor:
@@ -44,10 +66,13 @@ def _upper_cholesky_of_inverse(h: torch.Tensor, eye: torch.Tensor) -> torch.Tens
 
 @torch.no_grad()
 def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int, group_size: int = 128,
-                          damp: float = 0.01, block_size: int = 128) -> torch.Tensor:
+                          damp: float = 0.01, block_size: int = 128, return_params: bool = False):
     """GPTQ for a batch of independent matrices at once: weight [B, out, in], hessian [B, in, in].
-    Mathematically identical to running `gptq_quantize` on each pair, but loops over columns only once."""
+    Mathematically identical to running `gptq_quantize` on each pair, but loops over columns only once.
+    With `return_params`, also returns scale and zero [B, out, in // group_size] for export."""
     if bits >= NO_QUANT_BITS:
+        if return_params:
+            raise ValueError("return_params needs bits < NO_QUANT_BITS")
         return weight.clone()
     W = weight.float().clone()
     H = hessian.float().clone()
@@ -70,6 +95,7 @@ def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int
             torch.backends.cuda.preferred_linalg_library(previous)
     Q = torch.zeros_like(W)
     scale = zero = None
+    scales, zeros = [], []
     for i1 in range(0, cols, block_size):
         i2 = min(i1 + block_size, cols)
         W1 = W[:, :, i1:i2].clone()
@@ -80,6 +106,8 @@ def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int
             if col % group_size == 0:
                 group = torch.cat([W1[:, :, i:], W[:, :, i2:]], dim=-1)[:, :, :group_size]
                 scale, zero = _group_params(group, bits)
+                scales.append(scale)
+                zeros.append(zero)
             w, d = W1[:, :, i], Hinv1[:, i, i].unsqueeze(1)
             q = _quantize_column(w, scale, zero, bits)
             Q1[:, :, i] = q
@@ -88,6 +116,8 @@ def gptq_quantize_batched(weight: torch.Tensor, hessian: torch.Tensor, bits: int
             E1[:, :, i] = err
         Q[:, :, i1:i2] = Q1
         W[:, :, i2:] -= E1 @ Hinv[:, i1:i2, i2:]
+    if return_params:
+        return Q.to(weight.dtype), torch.stack(scales, dim=-1), torch.stack(zeros, dim=-1)
     return Q.to(weight.dtype)
 
 
@@ -141,13 +171,21 @@ def _expert_hessians(xs: list[torch.Tensor], gate: nn.Module, experts: nn.Module
 @torch.no_grad()
 def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_layer,
                          group_size: int = 128, min_tokens: int = 16, attention_bits: int | None = 8,
-                         expert_chunk: int = 32) -> dict:
+                         expert_chunk: int = 32, record: dict | None = None) -> dict:
     """In place: attention to `attention_bits` (RTN), then every expert of this layer with GPTQ at
-    `expert_bits[e]` bits, calibrated on `inputs()`. Returns per-expert calibration token counts."""
+    `expert_bits[e]` bits, calibrated on `inputs()`. Returns per-expert calibration token counts.
+
+    If `record` is a dict, it is filled with the quantization grid needed to export the layer:
+    record["attention"][name] = (bits, scale, zero); record[stage][e] = (bits, scale, zero)."""
+    if record is not None:
+        record.update({"attention": {}, "gate_up": {}, "down": {}})
     if attention_bits is not None:
         for name in ATTENTION_PROJECTIONS:
             proj = getattr(layer.self_attn, name)
-            proj.weight.copy_(fake_quantize(proj.weight, attention_bits, group_size))
+            q, scale, zero = rtn_quantize(proj.weight, attention_bits, group_size)
+            proj.weight.copy_(q)
+            if record is not None:
+                record["attention"][name] = (attention_bits, scale, zero)
     gate, experts = layer.mlp.gate, layer.mlp.experts
     xs = _capture_moe_inputs(layer, inputs, run_layer)
     stats = {}
@@ -158,14 +196,19 @@ def quantize_layer_gptq_(layer: nn.Module, expert_bits: np.ndarray, inputs, run_
                 continue
             chosen = [e for e, b in enumerate(expert_bits) if int(b) == bits]
             for e in (e for e in chosen if counts[e] < min_tokens):  # too little data: round to nearest
-                param[e].copy_(fake_quantize(param[e], bits, group_size))
+                q, scale, zero = rtn_quantize(param[e], bits, group_size)
+                param[e].copy_(q)
+                if record is not None:
+                    record[stage][e] = (bits, scale, zero)
             calibrated = [e for e in chosen if counts[e] >= min_tokens]
             for start in range(0, len(calibrated), expert_chunk):  # all experts of one bit-width at once
                 group = calibrated[start:start + expert_chunk]
-                quantized = gptq_quantize_batched(param[group], torch.stack([hessians[e] for e in group]),
-                                                  bits, group_size)
-                for e, q in zip(group, quantized):
-                    param[e].copy_(q)
+                quantized, scales, zeros = gptq_quantize_batched(
+                    param[group], torch.stack([hessians[e] for e in group]), bits, group_size, return_params=True)
+                for k, e in enumerate(group):
+                    param[e].copy_(quantized[k])
+                    if record is not None:
+                        record[stage][e] = (bits, scales[k], zeros[k])
         stats[stage] = counts
     return {"tokens_per_expert": stats["gate_up"].tolist(),
             "rtn_fallback_experts": int((stats["gate_up"] < min_tokens).sum())}
@@ -184,13 +227,16 @@ def router_traffic(layer: nn.Module, inputs, run_layer) -> np.ndarray:
 
 def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int = 128,
                               attention_bits: int | None = 8, min_tokens: int = 16,
-                              log: Callable[[str], None] = print) -> tuple[Callable, dict]:
+                              log: Callable[[str], None] = print,
+                              on_quantized: Callable[[str, int, nn.Module, dict], None] | None = None
+                              ) -> tuple[Callable, dict]:
     """Build a `prepare` callback for `stream_evaluate`.
 
     plans[config] = {"method": "gptq" | "rtn", "bits": array [layers, experts] or a callable
     bits(config, layer_index, layer, inputs, run_layer) -> array [experts]} (the callable form lets bits
     depend on router traffic measured in the same streamed run). Configurations without a plan (e.g.
     "original") are left untouched. Returns (prepare, stats); stats collects per-layer GPTQ details.
+    `on_quantized(config, index, layer, record)` is called after each GPTQ layer, e.g. to write it to disk.
     """
     stats: dict[str, list[dict]] = {name: [] for name in plans}
 
@@ -210,11 +256,14 @@ def make_quantization_prepare(streamed, plans: dict[str, dict], group_size: int 
                 for e, b in enumerate(bits):
                     param[e].copy_(fake_quantize(param[e], int(b), group_size))
         elif plan["method"] == "gptq":
+            record = {} if on_quantized is not None else None
             layer_stats = quantize_layer_gptq_(
                 layer, bits, inputs, run_layer,
-                group_size=group_size, min_tokens=min_tokens, attention_bits=attention_bits)
+                group_size=group_size, min_tokens=min_tokens, attention_bits=attention_bits, record=record)
             stats[config].append({**layer_stats, "bits": np.asarray(bits).tolist()})
             log(f"  {config}: layer {index} GPTQ, {layer_stats['rtn_fallback_experts']} experts fell back to RTN")
+            if on_quantized is not None:
+                on_quantized(config, index, layer, record)
         else:
             raise ValueError(f"unknown method {plan['method']!r} for {config}")
 
