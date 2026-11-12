@@ -125,6 +125,8 @@ def hf_token() -> str | None:
 
 
 TOKEN = hf_token()
+if LAYER_LIMIT is None and not TOKEN:  # the written files live only in this session: without upload they are lost
+    raise RuntimeError("Full run needs the HF_TOKEN secret: Add-ons → Secrets → enable HF_TOKEN, then run again.")
 if TOKEN:
     from huggingface_hub import HfApi
     whoami = HfApi(token=TOKEN).whoami()["name"]
