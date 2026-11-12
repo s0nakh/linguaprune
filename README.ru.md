@@ -61,7 +61,7 @@
 
 > [!WARNING]
 > **Чем этот результат (пока) не является:**
-> - Файл проверен только загрузчиком этого пакета. Запуск в vLLM и других программах и скорость — [следующий шаг](#roadmap).
+> - Файл загружается и отвечает на казахском, русском и английском в [GPTQModel](https://github.com/ModelCloud/GPTQModel) ([ноутбук 08](notebooks/08_run_with_gptqmodel.ipynb)), но медленно (около 1,6 токена/с на двух T4 с переносимым ядром). vLLM и Ollama / LM Studio — [следующий шаг](#roadmap).
 > - KazMMLU по казахскому чуть ниже: −1,6 пункта у файла, −2,7 в ноутбуке 06 (парный 95% ДИ от −5,4 до 0,0, тест Макнемара p = 0,08). На 370 вопросах это незначимо, поэтому дальше — полный KazMMLU.
 > - Одна модель, одно зерно, 762 вопроса KazMMLU и 150 отрывков Belebele на язык.
 
@@ -117,6 +117,7 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 | 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ с калибровкой на kk+ru, по одному слою | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
 | 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B на бесплатной T4: какие биты, какая калибровка | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
 | 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **Результат выше:** пишет настоящие файлы GPTQ и заново оценивает их с диска | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
+| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Читает ли файл обычная программа и отвечает ли модель на вопросы? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
 
 Ноутбуки двуязычные: сначала английский, под каждой текстовой ячейкой — русский.
 Как запустить: *Open in Kaggle* → **Accelerator: GPU T4** и **Internet: On** → **Save Version → Save & Run All**. Результаты появятся в `/kaggle/working/results`.
@@ -242,7 +243,8 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 - ✅ 01–05 · Профиль маршрутизации, прунинг, физическое удаление, смешанная точность, GPTQ на OLMoE
 - ✅ 06 · Qwen3-30B-A3B: при той же памяти английская калибровка обходится казахскому в 16 раз дороже, чем kk+ru
 - ✅ 07 · **Настоящий файл 15,24 ГБ (в 4,0 раза меньше), kk/ru в пределах 2%, оценка с диска**
-- 🔥 Запуск файла в vLLM и других программах; скорость; сравнение с популярными 4-битными версиями
+- ✅ 08 · **Файл работает в GPTQModel и отвечает на kk, ru и en**; перплексия совпадает с ноутбуком 07 в пределах 0,1%
+- 🔥 Публикация на Hugging Face; быстрые ядра и vLLM; сборка GGUF для Ollama / LM Studio; сравнение с популярными 4-битными версиями
 - ⬜ Полный KazMMLU и MERA, чтобы разрешить тренд в 2–3 пункта для казахского
 - ⬜ Командная строка `linguaprune`: профиль → биты → квантование → экспорт, для любой пары языков
 - ⬜ Вторая пара языков и второе семейство MoE

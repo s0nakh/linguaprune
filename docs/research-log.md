@@ -186,3 +186,27 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - Not tested yet: loading in vLLM and other runtimes, and speed.
 - **Decision.** Publish both checkpoints on Hugging Face; next, test runtime compatibility and compare against popular 4-bit versions on the same exam.
 - [Notebook](../notebooks/07_real_gptq_checkpoint.ipynb) · [data](../experiments/07/full/)
+
+## 2026-11-12 · 08 · The compressed model in a standard runtime
+
+- **Question.** Does a runtime we do not control read the files correctly and answer questions?
+- **Setup.**
+  - [GPTQModel](https://github.com/ModelCloud/GPTQModel) 7.6.0 on transformers 5.20, torch kernel, two Kaggle T4.
+  - GPTQModel refuses asymmetric checkpoints in the classic GPTQ layout from other tools, so each download is converted to its `gptq_v2` layout first (zero points stored without the −1 offset; nothing else changes). LinguaPrune 0.5.1 adds this conversion.
+  - Tiny check: a random 2-layer Qwen3-MoE with mixed 3/4/8-bit modules, written by LinguaPrune and loaded by GPTQModel.
+  - Real models: 40 kk + 40 ru Belebele passages re-scored and compared with notebook 07 on the same passages; five questions in kk, ru and en, greedy decoding.
+- **Result.**
+  - Tiny check: 0.00003 nats per token between LinguaPrune and GPTQModel.
+
+  | Model | GPU memory | kk ppl vs. notebook 07 | ru ppl vs. notebook 07 | Speed |
+  |---|---|---|---|---|
+  | kk+ru 4-bit | 17.4 GB | +0.01% | −0.08% | 1.6 tokens/s |
+  | kk+ru 4/3-bit | 15.3 GB | −0.04% | +0.01% | 1.6 tokens/s |
+
+  - Both models answer correctly and fluently in Kazakh, Russian and English (capital, translation, photosynthesis, rivers, Abai). Answers are in [`experiments/08/`](../experiments/08/).
+  - One factual slip: the 4/3-bit model gives Abai's death year as 1908 (correct: 1904; the 4-bit model gets it right).
+- **Observations.**
+  - The mixed 4/3-bit file works in a standard runtime: GPTQModel reads every module at its declared width.
+  - Speed is low because the portable torch kernel dequantizes every expert on every call; faster kernels and vLLM are not tested yet.
+- **Decision.** Re-upload both checkpoints in the `gptq_v2` layout with usage instructions, then try vLLM and a GGUF build for Ollama / LM Studio users.
+- [Notebook](../notebooks/08_run_with_gptqmodel.ipynb) · [data](../experiments/08/)

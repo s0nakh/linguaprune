@@ -61,7 +61,7 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 
 > [!WARNING]
 > **What this result is not (yet):**
-> - The file is tested only with this package's own loader. Loading in vLLM and other runtimes, and speed, are the [next step](#roadmap).
+> - The file loads and answers questions in Kazakh, Russian and English in [GPTQModel](https://github.com/ModelCloud/GPTQModel) ([notebook 08](notebooks/08_run_with_gptqmodel.ipynb)), but slowly (about 1.6 tokens/s on two T4 with the portable kernel). vLLM and Ollama / LM Studio are the [next step](#roadmap).
 > - KazMMLU for Kazakh trends down: −1.6 points for the file, −2.7 in notebook 06 (paired 95% CI −5.4 to 0.0, McNemar p = 0.08). That is not significant on 370 questions, so the full KazMMLU run comes next.
 > - One model, one seed, 762 KazMMLU questions and 150 Belebele passages per language.
 
@@ -117,6 +117,7 @@ Every compressed model is compared **per question** with the original (paired bo
 | 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ calibrated on kk+ru, layer by layer | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
 | 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B on a free T4: which bits, which calibration | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
 | 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
+| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Does a standard runtime read the file and answer questions? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
 
 Notebooks are bilingual: English first, Russian below each text cell.
 To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
@@ -242,7 +243,8 @@ Data: [`experiments/06/`](experiments/06/)
 - ✅ 01–05 · Routing profile, pruning, physical removal, mixed precision, GPTQ on OLMoE
 - ✅ 06 · Qwen3-30B-A3B: at equal memory, English calibration costs Kazakh 16× more than kk+ru
 - ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
-- 🔥 Run the file in vLLM and other runtimes; measure speed; compare with popular 4-bit versions
+- ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
+- 🔥 Publish on Hugging Face; faster kernels and vLLM; a GGUF build for Ollama / LM Studio; compare with popular 4-bit versions
 - ⬜ Full KazMMLU and MERA to settle the 2–3 point trend for Kazakh
 - ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
