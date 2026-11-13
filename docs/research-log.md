@@ -210,3 +210,39 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - Speed is low because the portable torch kernel dequantizes every expert on every call; faster kernels and vLLM are not tested yet.
 - **Decision.** Re-upload both checkpoints in the `gptq_v2` layout with usage instructions, then try vLLM and a GGUF build for Ollama / LM Studio users.
 - [Notebook](../notebooks/08_run_with_gptqmodel.ipynb) · [data](../experiments/08/)
+
+## 2026-11-13 · 09 · Against popular quantized versions
+
+- **Question.** Popular GGUF files of the same model are tuned on English text. How much Kazakh and Russian do they lose at each size, compared with LinguaPrune?
+- **Setup.**
+  - Nine files of Qwen3-30B-A3B-Instruct-2507 from the two most downloaded GGUF publishers (unsloth, bartowski), from Q6_K (25.1 GB) down to IQ2_M (9.9 GB).
+  - llama.cpp (llama-cpp-python 0.3.36, built for T4) on two Kaggle T4, 4096-token context.
+  - Exactly the exam of notebook 07: the same 1,239 items (Belebele kk/ru/en perplexity and answers, KazMMLU kk/ru, fact probes), checked item by item against the 16-bit scores of notebook 07.
+  - Q6_K is the engine check: at 6 bits the loss should be close to zero.
+- **Result.** Perplexity growth vs. 16-bit (lower is better), accuracy in %.
+
+  | Model | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+  |---|---|---|---|---|---|---|
+  | Q6_K (engine check) | 25.09 GB · 2.4× | +0.6% | +0.7% | +0.8% | 66.2 / 72.4 | 76.7 |
+  | Q4_K_M | 18.56 GB · 3.3× | +2.2% | +2.2% | +2.1% | 64.3 / 71.4 | 78.7 |
+  | UD-Q4_K_XL | 17.69 GB · 3.5× | +2.3% | +2.3% | +1.9% | 64.9 / 71.2 | 78.0 |
+  | **LinguaPrune kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
+  | IQ4_XS | 16.38 GB · 3.7× | +4.3% | +3.6% | +6.5% | 64.9 / 72.2 | 75.3 |
+  | **LinguaPrune kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
+  | UD-Q3_K_XL | 13.83 GB · 4.4× | +5.7% | +3.0% | +5.7% | 66.2 / 72.4 | 74.0 |
+  | UD-IQ3_XXS | 12.91 GB · 4.7× | +5.4% | +3.6% | +3.2% | 65.1 / 70.4 | 75.3 |
+  | UD-Q2_K_XL | 11.79 GB · 5.2× | +12.1% | +7.2% | +10.0% | 64.3 / 69.1 | 74.7 |
+  | UD-IQ2_M | 10.85 GB · 5.6× | +10.0% | +5.3% | +6.7% | 65.4 / 70.4 | 72.0 |
+  | bartowski IQ2_M | 9.87 GB · 6.2× | +15.8% | +5.7% | +11.5% | 61.4 / 68.9 | 75.3 |
+
+  ![Kazakh loss vs. size](../assets/kazakh_vs_gguf.png)
+
+- **Observations.**
+  - Between 15 and 19 GB, only the LinguaPrune files stay within 2% for both Kazakh and Russian. The 4/3-bit file is 1.1 GB smaller than IQ4_XS and loses 3.4× less Kazakh and 9× less Russian.
+  - The engine check costs 0.6–0.8% even at 6 bits, so part of every GGUF number is the runtime, not the quantization. Subtracting it, Q4_K_M still loses more Kazakh (+1.6%) than either LinguaPrune file, which are larger by nothing (4-bit) or 3.3 GB smaller (4/3-bit).
+  - We pay in English: +3.2% for the 4/3-bit file vs. +2.1% for Q4_K_M. That is the trade we chose.
+  - Below 14 GB, popular files lose Kazakh fastest. At 2 bits Kazakh loses 1.5–2.8× more than Russian, and KazMMLU kk drops 5.4 points for IQ2_M at 9.9 GB.
+  - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions.
+  - Not compared: speed. GGUF runs fast in llama.cpp; our files still run only in the slow GPTQModel kernel.
+- **Decision.** The open space is 10–12 GB, where popular files lose 10–16% of Kazakh. Next: a language-aware ~2.5-bit file aimed at that range with kk and ru within 2%, and a GGUF build of our bit allocation so it runs at llama.cpp speed.
+- [Notebook](../notebooks/09_popular_quants_on_kazakh.ipynb) · [data](../experiments/09/)

@@ -44,6 +44,22 @@
 
 Файл в стандартном формате GPTQ. Оценка с диска даёт ровно те же ответы, что и модель в памяти (наибольшая разница 0,0). Данные: [`experiments/07/full/`](experiments/07/full/).
 
+**Против популярных сжатых версий.** Самые скачиваемые файлы GGUF той же модели (unsloth, bartowski) прошли ровно тот же экзамен в llama.cpp ([ноутбук 09](notebooks/09_popular_quants_on_kazakh.ipynb)). От 15 до 19 ГБ только LinguaPrune укладывается в 2% и для казахского, и для русского. Ниже 14 ГБ популярные файлы быстрее всего теряют казахский: до +15,8% на 9,9 ГБ.
+
+| Файл | На диске | Перплексия kk | Перплексия ru | Перплексия en |
+|---|---|---|---|---|
+| Q4_K_M | 18,56 ГБ | +2,2% | +2,2% | +2,1% |
+| UD-Q4_K_XL | 17,69 ГБ | +2,3% | +2,3% | +1,9% |
+| **LinguaPrune kk+ru 4 бита** | **17,39 ГБ** | **+1,2%** | **+1,4%** | +2,3% |
+| IQ4_XS | 16,38 ГБ | +4,3% | +3,6% | +6,5% |
+| **LinguaPrune kk+ru 4/3 бита** | **15,24 ГБ** | **+1,3%** | **+0,4%** | +3,2% |
+| UD-Q3_K_XL | 13,83 ГБ | +5,7% | +3,0% | +5,7% |
+| UD-Q2_K_XL | 11,79 ГБ | +12,1% | +7,2% | +10,0% |
+
+<img src="assets/ru/kazakh_vs_gguf.png" alt="Рост перплексии казахского и размер файла: LinguaPrune и популярные GGUF" width="820">
+
+Мы платим английским (+3,2% против +2,1% у Q4_K_M), а сама llama.cpp добавляет 0,6–0,8% даже при 6 битах; полная таблица с проверкой программы, KazMMLU и Belebele — в [исследовательском журнале](docs/research-log.ru.md).
+
 **Почему важен язык.** При той же памяти выбор битов и калибровка по английскому тексту вместо казахского и русского обходятся казахскому в 16 раз дороже (ноутбук 06, тот же конвейер, до перехода на формат файла):
 
 | Вариант (ноутбук 06) | Память | Перплексия kk | Перплексия ru | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
@@ -118,6 +134,7 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 | 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B на бесплатной T4: какие биты, какая калибровка | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
 | 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **Результат выше:** пишет настоящие файлы GPTQ и заново оценивает их с диска | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
 | 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Читает ли файл обычная программа и отвечает ли модель на вопросы? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
+| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | Как популярные файлы GGUF той же модели сдают тот же экзамен по казахскому и русскому? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
 
 Ноутбуки двуязычные: сначала английский, под каждой текстовой ячейкой — русский.
 Как запустить: *Open in Kaggle* → **Accelerator: GPU T4** и **Internet: On** → **Save Version → Save & Run All**. Результаты появятся в `/kaggle/working/results`.
@@ -244,7 +261,10 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 - ✅ 06 · Qwen3-30B-A3B: при той же памяти английская калибровка обходится казахскому в 16 раз дороже, чем kk+ru
 - ✅ 07 · **Настоящий файл 15,24 ГБ (в 4,0 раза меньше), kk/ru в пределах 2%, оценка с диска**
 - ✅ 08 · **Файл работает в GPTQModel и отвечает на kk, ru и en**; перплексия совпадает с ноутбуком 07 в пределах 0,1%
-- 🔥 Публикация на Hugging Face; быстрые ядра и vLLM; сборка GGUF для Ollama / LM Studio; сравнение с популярными 4-битными версиями
+- ✅ 09 · **Против 9 популярных файлов GGUF: только LinguaPrune держит kk и ru в пределах 2% на 15–19 ГБ**
+- 🔥 Файл ~2,5 бита с учётом языка на 10–12 ГБ, где популярные файлы теряют 10–16% казахского
+- 🔥 Сборка GGUF с нашим распределением битов для llama.cpp / Ollama / LM Studio; публикация на Hugging Face
+- 🔥 Экзамен по законам и официальным документам Казахстана на kk и ru
 - ⬜ Полный KazMMLU и MERA, чтобы разрешить тренд в 2–3 пункта для казахского
 - ⬜ Командная строка `linguaprune`: профиль → биты → квантование → экспорт, для любой пары языков
 - ⬜ Вторая пара языков и второе семейство MoE

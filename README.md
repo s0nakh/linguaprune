@@ -44,6 +44,22 @@ First target: Kazakh 🇰🇿 + Russian.
 
 The file uses the standard GPTQ layout. Scoring it from disk gives exactly the same answers as the model in memory (largest difference 0.0). Data: [`experiments/07/full/`](experiments/07/full/).
 
+**Against the popular quantized versions.** The most downloaded GGUF files of the same model (unsloth, bartowski) were scored on exactly the same exam in llama.cpp ([notebook 09](notebooks/09_popular_quants_on_kazakh.ipynb)). Between 15 and 19 GB, only LinguaPrune stays within 2% for both Kazakh and Russian. Below 14 GB, the popular files lose Kazakh fastest: up to +15.8% at 9.9 GB.
+
+| File | On disk | kk perplexity | ru perplexity | en perplexity |
+|---|---|---|---|---|
+| Q4_K_M | 18.56 GB | +2.2% | +2.2% | +2.1% |
+| UD-Q4_K_XL | 17.69 GB | +2.3% | +2.3% | +1.9% |
+| **LinguaPrune kk+ru 4-bit** | **17.39 GB** | **+1.2%** | **+1.4%** | +2.3% |
+| IQ4_XS | 16.38 GB | +4.3% | +3.6% | +6.5% |
+| **LinguaPrune kk+ru 4/3-bit** | **15.24 GB** | **+1.3%** | **+0.4%** | +3.2% |
+| UD-Q3_K_XL | 13.83 GB | +5.7% | +3.0% | +5.7% |
+| UD-Q2_K_XL | 11.79 GB | +12.1% | +7.2% | +10.0% |
+
+<img src="assets/kazakh_vs_gguf.png" alt="Kazakh perplexity growth vs. file size for LinguaPrune and popular GGUF files" width="820">
+
+We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
+
 **Why the language matters.** At equal memory, choosing bits and calibration by English text instead of Kazakh and Russian costs Kazakh 16× more (notebook 06, same pipeline, before the file format):
 
 | Configuration (notebook 06) | Memory | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
@@ -118,6 +134,7 @@ Every compressed model is compared **per question** with the original (paired bo
 | 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B on a free T4: which bits, which calibration | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
 | 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
 | 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Does a standard runtime read the file and answer questions? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
+| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | How do popular GGUF files of the same model score on the same Kazakh and Russian exam? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
 
 Notebooks are bilingual: English first, Russian below each text cell.
 To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
@@ -244,7 +261,10 @@ Data: [`experiments/06/`](experiments/06/)
 - ✅ 06 · Qwen3-30B-A3B: at equal memory, English calibration costs Kazakh 16× more than kk+ru
 - ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
 - ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
-- 🔥 Publish on Hugging Face; faster kernels and vLLM; a GGUF build for Ollama / LM Studio; compare with popular 4-bit versions
+- ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru within 2% at 15–19 GB**
+- 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
+- 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
+- 🔥 An exam on Kazakhstan's laws and official documents in kk and ru
 - ⬜ Full KazMMLU and MERA to settle the 2–3 point trend for Kazakh
 - ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
