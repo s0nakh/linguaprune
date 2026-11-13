@@ -58,7 +58,7 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 
 <img src="assets/kazakh_vs_gguf.png" alt="Kazakh perplexity growth vs. file size for LinguaPrune and popular GGUF files" width="820">
 
-We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
+This is perplexity, i.e. how well each file keeps Kazakh and Russian text. On the KazMMLU knowledge exam, all files from 13 to 18 GB score 64–66%, within noise: UD-Q3_K_XL at 13.8 GB scores 66.2% vs. our 65.1%. We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
 
 **Why the language matters.** At equal memory, choosing bits and calibration by English text instead of Kazakh and Russian costs Kazakh 16× more (notebook 06, same pipeline, before the file format):
 
@@ -261,7 +261,7 @@ Data: [`experiments/06/`](experiments/06/)
 - ✅ 06 · Qwen3-30B-A3B: at equal memory, English calibration costs Kazakh 16× more than kk+ru
 - ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
 - ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
-- ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru within 2% at 15–19 GB**
+- ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru perplexity within 2% at 15–19 GB**; KazMMLU is a tie within noise
 - 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
 - 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru

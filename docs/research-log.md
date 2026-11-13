@@ -242,7 +242,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - The engine check costs 0.6–0.8% even at 6 bits, so part of every GGUF number is the runtime, not the quantization. Subtracting it, Q4_K_M still loses more Kazakh (+1.6%) than either LinguaPrune file, which are larger by nothing (4-bit) or 3.3 GB smaller (4/3-bit).
   - We pay in English: +3.2% for the 4/3-bit file vs. +2.1% for Q4_K_M. That is the trade we chose.
   - Below 14 GB, popular files lose Kazakh fastest. At 2 bits Kazakh loses 1.5–2.8× more than Russian, and KazMMLU kk drops 5.4 points for IQ2_M at 9.9 GB.
-  - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions.
+  - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions. The lead is in perplexity (keeping the text), not yet in knowledge: UD-Q3_K_XL at 13.8 GB scores 66.2% on KazMMLU kk vs. 65.1% for our 15.24 GB file.
   - Not compared: speed. GGUF runs fast in llama.cpp; our files still run only in the slow GPTQModel kernel.
 - **Decision.** The open space is 10–12 GB, where popular files lose 10–16% of Kazakh. Next: a language-aware ~2.5-bit file aimed at that range with kk and ru within 2%, and a GGUF build of our bit allocation so it runs at llama.cpp speed.
 - [Notebook](../notebooks/09_popular_quants_on_kazakh.ipynb) · [data](../experiments/09/)
