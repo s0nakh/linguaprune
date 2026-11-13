@@ -108,14 +108,17 @@ def imatrix_command(tool: Path, model: Path, text: Path, out: Path, chunks: int 
     return command
 
 
-def merge_imatrix_command(tool: Path, inputs: Sequence[Path], out: Path) -> list[str]:
-    """Combine importance matrices (statistics are summed, weighted by how many tokens each saw)."""
+def merge_imatrix_command(tool: Path, model: Path, inputs: Sequence[Path], out: Path) -> list[str]:
+    """Combine importance matrices (statistics are summed, weighted by how many tokens each saw).
+
+    llama-imatrix takes the inputs as one comma-separated `--in-file` (a repeated flag keeps only the last one) and
+    insists on `-m`, although the model is not loaded when no text is given.
+    """
     if len(inputs) < 2:
         raise ValueError("merging needs at least two importance matrices")
-    command = [str(tool)]
-    for path in inputs:
-        command += ["--in-file", str(path)]
-    return command + ["-o", str(out)]
+    if any("," in str(path) for path in inputs):
+        raise ValueError("importance matrix paths must not contain commas")
+    return [str(tool), "-m", str(model), "--in-file", ",".join(str(path) for path in inputs), "-o", str(out)]
 
 
 def quantize_command(tool: Path, source: Path, out: Path, quant_type: str, imatrix: Path | None,

@@ -109,10 +109,12 @@ def test_tool_command_lines():
     tool = Path("bin/llama-imatrix")
     cmd = imatrix_command(tool, Path("m.gguf"), Path("t.txt"), Path("o.gguf"), chunks=3)
     assert cmd[:2] == ["bin/llama-imatrix", "-m"] and cmd[-2:] == ["--chunks", "3"] and "--fit" in cmd
-    assert merge_imatrix_command(tool, [Path("a"), Path("b")], Path("c")) == \
-        ["bin/llama-imatrix", "--in-file", "a", "--in-file", "b", "-o", "c"]
+    assert merge_imatrix_command(tool, Path("m.gguf"), [Path("a"), Path("b")], Path("c")) == \
+        ["bin/llama-imatrix", "-m", "m.gguf", "--in-file", "a,b", "-o", "c"]
     with pytest.raises(ValueError):
-        merge_imatrix_command(tool, [Path("a")], Path("c"))
+        merge_imatrix_command(tool, Path("m.gguf"), [Path("a")], Path("c"))
+    with pytest.raises(ValueError):
+        merge_imatrix_command(tool, Path("m.gguf"), [Path("a,1"), Path("b")], Path("c"))
     q = quantize_command(Path("q"), Path("src.gguf"), Path("out.gguf"), "IQ2_M", Path("im.gguf"), ["attn_v=q8_0"])
     assert q[:4] == ["q", "--allow-requantize", "--imatrix", "im.gguf"]
     assert q[4:6] == ["--tensor-type", "attn_v=q8_0"] and q[6:9] == ["src.gguf", "out.gguf", "IQ2_M"]
