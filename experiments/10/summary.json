@@ -1,0 +1,182 @@
+{
+  "versions": {
+    "python": "3.13.16",
+    "llama_cpp_python": "0.3.36",
+    "transformers": "5.20.2",
+    "datasets": "4.8.5",
+    "linguaprune": "0.6.1"
+  },
+  "dry_run": false,
+  "items_scored": 1239,
+  "quant_type": "IQ2_M",
+  "source": "unsloth/Qwen3-30B-A3B-Instruct-2507-GGUF/Qwen3-30B-A3B-Instruct-2507-Q8_0.gguf",
+  "calibration_tokens": {
+    "kk": 61392,
+    "ru": 60950,
+    "en": 97026
+  },
+  "imatrix": {
+    "kkru": {
+      "minutes": 11.626800298690796,
+      "partial_entries": 2397,
+      "skipped_entries": 0
+    },
+    "en": {
+      "minutes": 10.603577820460002,
+      "partial_entries": 2502,
+      "skipped_entries": 0
+    }
+  },
+  "files": {
+    "IQ2_M · kk+ru imatrix": {
+      "file_gb": 10.169508224,
+      "load_min": 0.7322272777557373,
+      "score_min": 11.453694252173106,
+      "imatrix": "kkru",
+      "quantize_min": 63.654214930534366
+    },
+    "IQ2_M · publisher imatrix": {
+      "file_gb": 10.169508224,
+      "load_min": 0.7185929298400879,
+      "score_min": 11.554796183109284,
+      "imatrix": "publisher",
+      "quantize_min": 63.28336314757665
+    },
+    "IQ2_M · kk+ru+en imatrix": {
+      "file_gb": 10.169508224,
+      "load_min": 0.7273118019104003,
+      "score_min": 11.971825524171193,
+      "imatrix": "kkru_en",
+      "quantize_min": 73.56148353815078
+    },
+    "IQ2_M · English imatrix": {
+      "file_gb": 10.169508224,
+      "load_min": 0.7203444163004558,
+      "score_min": 11.736875601609547,
+      "imatrix": "en",
+      "quantize_min": 67.83103090524673
+    }
+  },
+  "failures": {},
+  "table": [
+    {
+      "config": "original (16-bit)",
+      "size_gb": 61.064245248,
+      "ppl_kk": 4.6065371345,
+      "belebele_kk": 0.7733333333,
+      "ppl_ru": 6.5457618171,
+      "belebele_ru": 0.9266666667,
+      "ppl_en": 15.0062828067,
+      "belebele_en": 0.9266666667,
+      "kazmmlu_kk": 0.6675675676,
+      "kazmmlu_ru": 0.7142857143,
+      "facts": 1.0,
+      "growth_kk": 0.0,
+      "growth_ru": 0.0,
+      "growth_en": 0.0,
+      "compression": 1.0
+    },
+    {
+      "config": "UD-IQ2_M",
+      "size_gb": 10.845131168,
+      "ppl_kk": 5.0663175541,
+      "belebele_kk": 0.72,
+      "ppl_ru": 6.8895554931,
+      "belebele_ru": 0.92,
+      "ppl_en": 16.0066808057,
+      "belebele_en": 0.9,
+      "kazmmlu_kk": 0.6540540541,
+      "kazmmlu_ru": 0.7040816327,
+      "facts": 1.0,
+      "growth_kk": 0.0998104229,
+      "growth_ru": 0.0525215682,
+      "growth_en": 0.0666652769,
+      "compression": 5.6305676992
+    },
+    {
+      "config": "IQ2_M · kk+ru imatrix",
+      "size_gb": 10.169508224,
+      "ppl_kk": 5.3002242797,
+      "belebele_kk": 0.76,
+      "ppl_ru": 7.1514710367,
+      "belebele_ru": 0.9133333333,
+      "ppl_en": 17.0745864105,
+      "belebele_en": 0.92,
+      "kazmmlu_kk": 0.6135135135,
+      "kazmmlu_ru": 0.681122449,
+      "facts": 1.0,
+      "growth_kk": 0.1505875509,
+      "growth_ru": 0.0925345646,
+      "growth_en": 0.1378291766,
+      "compression": 6.0046409229
+    },
+    {
+      "config": "IQ2_M · kk+ru+en imatrix",
+      "size_gb": 10.169508224,
+      "ppl_kk": 5.3133992585,
+      "belebele_kk": 0.7666666667,
+      "ppl_ru": 7.089237554,
+      "belebele_ru": 0.9,
+      "ppl_en": 16.5339043396,
+      "belebele_en": 0.92,
+      "kazmmlu_kk": 0.6324324324,
+      "kazmmlu_ru": 0.6887755102,
+      "facts": 1.0,
+      "growth_kk": 0.1534476122,
+      "growth_ru": 0.0830271177,
+      "growth_en": 0.1017987967,
+      "compression": 6.0046409229
+    },
+    {
+      "config": "IQ2_M · publisher imatrix",
+      "size_gb": 10.169508224,
+      "ppl_kk": 5.4215117971,
+      "belebele_kk": 0.76,
+      "ppl_ru": 7.1360482738,
+      "belebele_ru": 0.8933333333,
+      "ppl_en": 16.4086071238,
+      "belebele_en": 0.9333333333,
+      "kazmmlu_kk": 0.6243243243,
+      "kazmmlu_ru": 0.7015306122,
+      "facts": 1.0,
+      "growth_kk": 0.1769169853,
+      "growth_ru": 0.0901784197,
+      "growth_en": 0.0934491463,
+      "compression": 6.0046409229
+    },
+    {
+      "config": "IQ2_M · English imatrix",
+      "size_gb": 10.169508224,
+      "ppl_kk": 5.4749472709,
+      "belebele_kk": 0.7466666667,
+      "ppl_ru": 7.2237905183,
+      "belebele_ru": 0.9,
+      "ppl_en": 16.7386589802,
+      "belebele_en": 0.9266666667,
+      "kazmmlu_kk": 0.6405405405,
+      "kazmmlu_ru": 0.6913265306,
+      "facts": 1.0,
+      "growth_kk": 0.1885169078,
+      "growth_ru": 0.1035828556,
+      "growth_en": 0.115443391,
+      "compression": 6.0046409229
+    },
+    {
+      "config": "bartowski IQ2_M",
+      "size_gb": 9.870270464,
+      "ppl_kk": 5.3338056954,
+      "belebele_kk": 0.7533333333,
+      "ppl_ru": 6.9209467463,
+      "belebele_ru": 0.9066666667,
+      "ppl_en": 16.7387614229,
+      "belebele_en": 0.9333333333,
+      "kazmmlu_kk": 0.6135135135,
+      "kazmmlu_ru": 0.6887755102,
+      "facts": 1.0,
+      "growth_kk": 0.1578774988,
+      "growth_ru": 0.057317229,
+      "growth_en": 0.1154502177,
+      "compression": 6.1866840904
+    }
+  ]
+}
