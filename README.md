@@ -135,6 +135,7 @@ Every compressed model is compared **per question** with the original (paired bo
 | 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
 | 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Does a standard runtime read the file and answer questions? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
 | 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | How do popular GGUF files of the same model score on the same Kazakh and Russian exam? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
+| 10 | [`10_kazakh_imatrix_gguf`](notebooks/10_kazakh_imatrix_gguf.ipynb) | Does a Kazakh and Russian calibration text make a better 2-bit GGUF? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/10_kazakh_imatrix_gguf.ipynb) |
 
 Notebooks are bilingual: English first, Russian below each text cell.
 To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
@@ -262,6 +263,7 @@ Data: [`experiments/06/`](experiments/06/)
 - ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
 - ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
 - ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru perplexity within 2% at 15–19 GB**; KazMMLU is a tie within noise
+- ✅ 10 · At 2 bits a Kazakh+Russian calibration text cuts the Kazakh loss only from +18.9% to +15.1%; the bit allocation matters more ([log](docs/research-log.md#2026-11-14--10--does-the-calibration-language-matter-at-2-bits))
 - 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
 - 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru

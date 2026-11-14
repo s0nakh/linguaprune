@@ -246,3 +246,34 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - Not compared: speed. GGUF runs fast in llama.cpp; our files still run only in the slow GPTQModel kernel.
 - **Decision.** The open space is 10–12 GB, where popular files lose 10–16% of Kazakh. Next: a language-aware ~2.5-bit file aimed at that range with kk and ru within 2%, and a GGUF build of our bit allocation so it runs at llama.cpp speed.
 - [Notebook](../notebooks/09_popular_quants_on_kazakh.ipynb) · [data](../experiments/09/)
+
+## 2026-11-14 · 10 · Does the calibration language matter at 2 bits?
+
+- **Question.** llama.cpp decides how to round each weight from an *importance matrix*, statistics of the activations on a calibration text. Publishers compute it mostly on English. If only that text changes to Kazakh and Russian, how much Kazakh does a 2-bit file keep?
+- **Setup.**
+  - One source file (unsloth `Q8_0`, 32.5 GB) requantized four times to `IQ2_M` (10.17 GB) with the same llama.cpp build; only the importance matrix differs:
+    - kk+ru: 128 Kazakh + 128 Russian Wikipedia articles, the first 512 tokens of each (122k tokens);
+    - English: 256 English articles (97k tokens);
+    - kk+ru+en: both, merged;
+    - publisher: `imatrix_unsloth.dat`, published next to the popular files.
+  - Exactly the exam of notebooks 07 and 09 (1,239 items, checked item by item). UD-IQ2_M and bartowski IQ2_M are the notebook 09 scores.
+- **Result.** Perplexity growth vs. 16-bit (lower is better), accuracy in %.
+
+  | File | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+  |---|---|---|---|---|---|---|
+  | UD-IQ2_M (unsloth) | 10.85 GB | **+10.0%** | **+5.3%** | **+6.7%** | 65.4 / 70.4 | 72.0 |
+  | IQ2_M · kk+ru imatrix | 10.17 GB | +15.1% | +9.3% | +13.8% | 61.4 / 68.1 | 76.0 |
+  | IQ2_M · kk+ru+en imatrix | 10.17 GB | +15.3% | +8.3% | +10.2% | 63.2 / 68.9 | 76.7 |
+  | IQ2_M · publisher imatrix | 10.17 GB | +17.7% | +9.0% | +9.3% | 62.4 / 70.2 | 76.0 |
+  | IQ2_M · English imatrix | 10.17 GB | +18.9% | +10.4% | +11.5% | 64.1 / 69.1 | 74.7 |
+  | bartowski IQ2_M | 9.87 GB | +15.8% | +5.7% | +11.5% | 61.4 / 68.9 | 75.3 |
+
+  ![Kazakh loss by calibration text](../assets/imatrix_language.png)
+
+- **Observations.**
+  - The calibration language helps, but only a little: Kazakh text instead of English cuts the Kazakh loss from +18.9% to +15.1%, about a fifth. Adding English back (kk+ru+en) keeps that gain and recovers most of the English.
+  - Which tensors get more bits matters more than the text. UD-IQ2_M, unsloth's per-tensor recipe, is 0.7 GB larger and loses a third less Kazakh (+10.0%) than any of our same-recipe files. bartowski's recipe keeps Russian at +5.7% with a different mix.
+  - KazMMLU does not follow perplexity here: the English-calibrated file scores best of the four on KazMMLU kk (64.1%), the kk+ru file worst (61.4%). Differences of 2–3 points on 370 questions are within noise.
+  - The kk+ru text had 25% more tokens than the English one, so the comparison slightly favours kk+ru.
+- **Decision.** Swapping the calibration text is not enough to beat the popular files at 10 GB, so we do not publish these files. The lever is the bit allocation: language-aware allocation at this size is the next step, together with an exam on legal and banking documents.
+- [Notebook](../notebooks/10_kazakh_imatrix_gguf.ipynb) · [data](../experiments/10/)
