@@ -14,7 +14,7 @@ dependencies = ["numpy", "torch"]
 
 [project.optional-dependencies]
 eval = ["datasets", "pandas", "transformers>=5"]
-test = ["pytest", "transformers>=5"]
+test = ["pytest", "pandas", "transformers>=5"]
 
 [project.urls]
 Homepage = "https://github.com/s0nakh/linguaprune"
