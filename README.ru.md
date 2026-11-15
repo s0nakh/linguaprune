@@ -380,6 +380,8 @@ python3 scripts/plot_qwen3_result.py   # перерисовывает графи
 
 ## 📝 Цитирование
 
+Кнопка GitHub **Cite this repository** берёт данные из [`CITATION.cff`](CITATION.cff). BibTeX:
+
 ```bibtex
 @software{linguaprune2026,
   title  = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
@@ -391,4 +393,12 @@ python3 scripts/plot_qwen3_result.py   # перерисовывает графи
 
 ## ⚖️ Лицензия
 
-[Apache-2.0](LICENSE). У моделей и датасетов свои лицензии: Qwen3 — Apache-2.0, KazMMLU — CC-BY-NC-4.0, Belebele — CC-BY-SA-4.0.
+Код распространяется по лицензии [Apache-2.0](LICENSE). У моделей, датасетов и инструментов свои лицензии; полный список, сверенный с каждым источником, — в [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). Кратко:
+
+| Ресурс | Лицензия | Как используется здесь |
+|---|---|---|
+| Qwen3-30B-A3B-Instruct-2507, OLMoE-1B-7B | Apache-2.0 | Модели, которые мы сжимаем и измеряем |
+| [Belebele](https://huggingface.co/datasets/facebook/belebele) (Bandarkar и др., ACL 2024) | CC-BY-SA-4.0 | Оценка; публикуются только числа, тексты не распространяются |
+| [KazMMLU](https://huggingface.co/datasets/MBZUAI/KazMMLU) (Togmanov и др., ACL 2025) | CC-BY-NC-4.0 | Оценка только для некоммерческого исследования |
+| Википедия (kk, ru, en) | CC-BY-SA-3.0 / GFDL | Только калибровочный текст |
+| llama.cpp, llama-cpp-python | MIT | Инструменты GGUF и запуск |

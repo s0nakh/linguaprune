@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use LinguaPrune, please cite it as below."
+title: "LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs"
+type: software
+authors:
+  - family-names: Akhmetova
+    given-names: Sophia
+repository-code: "https://github.com/s0nakh/linguaprune"
+url: "https://github.com/s0nakh/linguaprune"
+license: Apache-2.0
+version: "0.6.1"
+keywords:
+  - mixture-of-experts
+  - quantization
+  - model compression
+  - Kazakh
+  - Russian
+  - low-resource languages

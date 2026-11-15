@@ -380,6 +380,8 @@ Expert pruning (REAP), language-specific expert studies, and the closest work: E
 
 ## 📝 Citation
 
+GitHub's **Cite this repository** button reads [`CITATION.cff`](CITATION.cff). BibTeX:
+
 ```bibtex
 @software{linguaprune2026,
   title  = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
@@ -391,4 +393,12 @@ Expert pruning (REAP), language-specific expert studies, and the closest work: E
 
 ## ⚖️ License
 
-[Apache-2.0](LICENSE). Models and datasets keep their own licenses: Qwen3 is Apache-2.0, KazMMLU is CC-BY-NC-4.0 and Belebele is CC-BY-SA-4.0.
+The code is licensed under [Apache-2.0](LICENSE). Models, datasets and tools keep their own licenses; the full list, checked against each source, is in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). In short:
+
+| Resource | License | How it is used here |
+|---|---|---|
+| Qwen3-30B-A3B-Instruct-2507, OLMoE-1B-7B | Apache-2.0 | Models we compress and measure |
+| [Belebele](https://huggingface.co/datasets/facebook/belebele) (Bandarkar et al., ACL 2024) | CC-BY-SA-4.0 | Evaluation; scores only, no passages redistributed |
+| [KazMMLU](https://huggingface.co/datasets/MBZUAI/KazMMLU) (Togmanov et al., ACL 2025) | CC-BY-NC-4.0 | Evaluation for non-commercial research only |
+| Wikipedia (kk, ru, en) | CC-BY-SA-3.0 / GFDL | Calibration text only |
+| llama.cpp, llama-cpp-python | MIT | GGUF tools and inference |
