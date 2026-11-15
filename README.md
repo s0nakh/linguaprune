@@ -400,7 +400,7 @@ If you use LinguaPrune in your work, please cite it. Each block below has a copy
 **APA**
 
 ```text
-Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
+Akhmetova, Sophia (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
 ```
 
 ## ⚖️ License
