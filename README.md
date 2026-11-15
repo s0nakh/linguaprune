@@ -253,6 +253,84 @@ The 4/3/2-bit variant (13.2 GB, 4.6×) keeps Kazakh perplexity at +1.9%, yet Kaz
 Data: [`experiments/06/`](experiments/06/)
 </details>
 
+<details>
+<summary><b>07 · A real 15.24 GB file: 4.0× smaller, Kazakh and Russian within 2%</b></summary>
+
+<br>
+
+The compressed model is written as real GPTQ files and every score is taken from the file on disk. The largest difference between the in-memory model and the file is 0.0.
+
+| Configuration | On disk | kk ppl | ru ppl | KazMMLU kk | KazMMLU ru | Belebele kk / ru / en |
+|---|---|---|---|---|---|---|
+| original | 61.1 GB | — | — | 66.8% | 71.4% | 77.3 / 92.7 / 92.7% |
+| **kk+ru 4/3 @90%** | **15.24 GB (4.0×)** | **+1.3%** | **+0.4%** | 65.1% | 70.9% | 78.7 / 91.3 / 93.3% |
+| kk+ru 4-bit | 17.39 GB (3.5×) | +1.2% | +1.4% | 64.9% | 71.7% | 76.0 / 92.7 / 94.0% |
+
+Data: [`experiments/07/full/`](experiments/07/full/)
+</details>
+
+<details>
+<summary><b>08 · The files run in GPTQModel and answer in Kazakh, Russian and English</b></summary>
+
+<br>
+
+A runtime we do not control reads the mixed 4/3-bit file correctly: perplexity matches notebook 07 within 0.1%. Speed is low (1.6 tokens/s) because the portable torch kernel is used.
+
+| Model | GPU memory | kk ppl vs. notebook 07 | ru ppl vs. notebook 07 | Speed |
+|---|---|---|---|---|
+| kk+ru 4-bit | 17.4 GB | +0.01% | −0.08% | 1.6 tokens/s |
+| kk+ru 4/3-bit | 15.3 GB | −0.04% | +0.01% | 1.6 tokens/s |
+
+Data: [`experiments/08/`](experiments/08/)
+</details>
+
+<details>
+<summary><b>09 · Against 9 popular GGUF files: only LinguaPrune keeps kk and ru within 2% at 15–19 GB</b></summary>
+
+<br>
+
+Perplexity growth vs. 16-bit on the same exam in llama.cpp. KazMMLU differences above 12 GB are within noise; the lead is in keeping the text, not yet in knowledge.
+
+| Model | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+|---|---|---|---|---|---|---|
+| Q6_K (engine check) | 25.09 GB · 2.4× | +0.6% | +0.7% | +0.8% | 66.2 / 72.4 | 76.7 |
+| Q4_K_M | 18.56 GB · 3.3× | +2.2% | +2.2% | +2.1% | 64.3 / 71.4 | 78.7 |
+| UD-Q4_K_XL | 17.69 GB · 3.5× | +2.3% | +2.3% | +1.9% | 64.9 / 71.2 | 78.0 |
+| **LinguaPrune kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
+| IQ4_XS | 16.38 GB · 3.7× | +4.3% | +3.6% | +6.5% | 64.9 / 72.2 | 75.3 |
+| **LinguaPrune kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
+| UD-Q3_K_XL | 13.83 GB · 4.4× | +5.7% | +3.0% | +5.7% | 66.2 / 72.4 | 74.0 |
+| UD-IQ3_XXS | 12.91 GB · 4.7× | +5.4% | +3.6% | +3.2% | 65.1 / 70.4 | 75.3 |
+| UD-Q2_K_XL | 11.79 GB · 5.2× | +12.1% | +7.2% | +10.0% | 64.3 / 69.1 | 74.7 |
+| UD-IQ2_M | 10.85 GB · 5.6× | +10.0% | +5.3% | +6.7% | 65.4 / 70.4 | 72.0 |
+| bartowski IQ2_M | 9.87 GB · 6.2× | +15.8% | +5.7% | +11.5% | 61.4 / 68.9 | 75.3 |
+
+![Kazakh loss vs. size](assets/kazakh_vs_gguf.png)
+
+Data: [`experiments/09/`](experiments/09/)
+</details>
+
+<details>
+<summary><b>10 · At 2 bits the calibration language helps only a little; the bit allocation matters more</b></summary>
+
+<br>
+
+Same source file and type (IQ2_M, 10.17 GB); only the text used for the importance matrix changes. UD-IQ2_M, with its own per-tensor recipe, is the reference.
+
+| File | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+|---|---|---|---|---|---|---|
+| UD-IQ2_M (unsloth) | 10.85 GB | **+10.0%** | **+5.3%** | **+6.7%** | 65.4 / 70.4 | 72.0 |
+| IQ2_M · kk+ru imatrix | 10.17 GB | +15.1% | +9.3% | +13.8% | 61.4 / 68.1 | 76.0 |
+| IQ2_M · kk+ru+en imatrix | 10.17 GB | +15.3% | +8.3% | +10.2% | 63.2 / 68.9 | 76.7 |
+| IQ2_M · publisher imatrix | 10.17 GB | +17.7% | +9.0% | +9.3% | 62.4 / 70.2 | 76.0 |
+| IQ2_M · English imatrix | 10.17 GB | +18.9% | +10.4% | +11.5% | 64.1 / 69.1 | 74.7 |
+| bartowski IQ2_M | 9.87 GB | +15.8% | +5.7% | +11.5% | 61.4 / 68.9 | 75.3 |
+
+![Kazakh loss by calibration text](assets/imatrix_language.png)
+
+Data: [`experiments/10/`](experiments/10/)
+</details>
+
 <a id="roadmap"></a>
 ## 🗺️ Roadmap
 
