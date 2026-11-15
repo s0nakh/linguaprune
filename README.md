@@ -12,6 +12,7 @@ First target: Kazakh 🇰🇿 + Russian.
 <a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
 <a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
+<a href="#-citation"><img alt="Cite" src="https://img.shields.io/badge/cite-BibTeX%20%C2%B7%20CFF-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
 </p>
 <p>
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-39FF14?style=for-the-badge&labelColor=0D1117&logo=python&logoColor=white"></a>
@@ -380,7 +381,9 @@ Expert pruning (REAP), language-specific expert studies, and the closest work: E
 
 ## 📝 Citation
 
-GitHub's **Cite this repository** button reads [`CITATION.cff`](CITATION.cff). BibTeX:
+<a href="CITATION.cff"><img alt="Cite this repository" src="https://img.shields.io/badge/Cite%20this%20repository-CITATION.cff-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
+
+BibTeX:
 
 ```bibtex
 @software{linguaprune2026,
