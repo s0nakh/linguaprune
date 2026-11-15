@@ -381,17 +381,26 @@ python3 scripts/plot_qwen3_result.py   # перерисовывает графи
 
 ## 📝 Цитирование
 
-<p align="center"><a href="CITATION.cff"><img alt="Cite this repository" src="https://img.shields.io/badge/Cite%20this%20repository-CITATION.cff-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
+<p align="center"><a href="#-цитирование"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
 
-BibTeX:
+Если вы используете LinguaPrune в своей работе, пожалуйста, сошлитесь на него. У каждого блока ниже есть кнопка копирования; на GitHub то же самое даёт кнопка **Cite this repository** в боковой колонке (данные из [`CITATION.cff`](CITATION.cff)).
+
+**BibTeX**
 
 ```bibtex
 @software{linguaprune2026,
-  title  = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
-  author = {Akhmetova, Sophia},
-  year   = {2026},
-  url    = {https://github.com/s0nakh/linguaprune}
+  title   = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
+  author  = {Akhmetova, Sophia},
+  year    = {2026},
+  version = {0.6.1},
+  url     = {https://github.com/s0nakh/linguaprune}
 }
+```
+
+**APA**
+
+```text
+Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
 ```
 
 ## ⚖️ Лицензия

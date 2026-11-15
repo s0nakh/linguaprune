@@ -381,17 +381,26 @@ Expert pruning (REAP), language-specific expert studies, and the closest work: E
 
 ## 📝 Citation
 
-<p align="center"><a href="CITATION.cff"><img alt="Cite this repository" src="https://img.shields.io/badge/Cite%20this%20repository-CITATION.cff-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
+<p align="center"><a href="#-citation"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
 
-BibTeX:
+If you use LinguaPrune in your work, please cite it. Each block below has a copy button; on GitHub, **Cite this repository** in the sidebar gives the same from [`CITATION.cff`](CITATION.cff).
+
+**BibTeX**
 
 ```bibtex
 @software{linguaprune2026,
-  title  = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
-  author = {Akhmetova, Sophia},
-  year   = {2026},
-  url    = {https://github.com/s0nakh/linguaprune}
+  title   = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
+  author  = {Akhmetova, Sophia},
+  year    = {2026},
+  version = {0.6.1},
+  url     = {https://github.com/s0nakh/linguaprune}
 }
+```
+
+**APA**
+
+```text
+Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
 ```
 
 ## ⚖️ License
