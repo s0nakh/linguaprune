@@ -400,7 +400,7 @@ python3 scripts/plot_qwen3_result.py   # перерисовывает графи
 **APA**
 
 ```text
-Akhmetova, Sophia (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
+Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
 ```
 
 ## ⚖️ Лицензия
