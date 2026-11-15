@@ -12,7 +12,6 @@
 <a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
 <a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
-<a href="#-цитирование"><img alt="Cite" src="https://img.shields.io/badge/cite-BibTeX%20%C2%B7%20CFF-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
 </p>
 <p>
 <a href="https://www.python.org/"><img alt="Python" src="https://img.shields.io/badge/python-3.10%2B-39FF14?style=for-the-badge&labelColor=0D1117&logo=python&logoColor=white"></a>
@@ -22,8 +21,9 @@
 </p>
 <p>
 <a href="https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507"><img alt="Model" src="https://img.shields.io/badge/model-Qwen3--30B--A3B-F0529C?style=for-the-badge&labelColor=0D1117&logo=huggingface&logoColor=white"></a>
+<a href="#-цитирование"><img alt="Cite" src="https://img.shields.io/badge/cite-BibTeX-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
 <a href="#-как-мы-проверяем"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
-<a href="#"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
+<a href="#-как-мы-проверяем"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
 
@@ -353,7 +353,7 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 ## 📦 Python-пакет
 
 ```bash
-pip install "git+https://github.com/s0nakh/linguaprune@v0.4.0"
+pip install "git+https://github.com/s0nakh/linguaprune@v0.6.1"
 ```
 
 | Модуль | Что делает |
@@ -381,7 +381,7 @@ python3 scripts/plot_qwen3_result.py   # перерисовывает графи
 
 ## 📝 Цитирование
 
-<a href="CITATION.cff"><img alt="Cite this repository" src="https://img.shields.io/badge/Cite%20this%20repository-CITATION.cff-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
+<p align="center"><a href="CITATION.cff"><img alt="Cite this repository" src="https://img.shields.io/badge/Cite%20this%20repository-CITATION.cff-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
 
 BibTeX:
 
