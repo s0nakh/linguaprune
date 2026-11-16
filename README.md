@@ -25,6 +25,7 @@ First target: Kazakh 🇰🇿 + Russian.
 <a href="#-evaluation"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
 <a href="#-evaluation"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%C2%B7%20RU%20%C2%B7%20KK-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
+<a href="https://doi.org/10.5281/zenodo.24281161"><img alt="Paper" src="https://img.shields.io/badge/paper-Zenodo-1682D4?style=for-the-badge&labelColor=0D1117&logo=zenodo&logoColor=white"></a>
 </p>
 
 [Русская версия](README.ru.md) · [Қазақша нұсқасы](README.kk.md) · [Research log](docs/research-log.md) · [Related work](docs/prior-art.md)

@@ -25,6 +25,7 @@
 <a href="#-қалай-тексереміз"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
 <a href="#-қалай-тексереміз"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
 <a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%C2%B7%20RU%20%C2%B7%20KK-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
+<a href="https://doi.org/10.5281/zenodo.24281169"><img alt="Paper" src="https://img.shields.io/badge/%D0%BC%D0%B0%D2%9B%D0%B0%D0%BB%D0%B0-Zenodo-1682D4?style=for-the-badge&labelColor=0D1117&logo=zenodo&logoColor=white"></a>
 </p>
 
 [English](README.md) · [Русский](README.ru.md) · [Зерттеу журналы](docs/research-log.md) · [Байланысты жұмыстар](docs/prior-art.kk.md)
