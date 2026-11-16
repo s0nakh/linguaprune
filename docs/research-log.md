@@ -277,3 +277,20 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - The kk+ru text had 25% more tokens than the English one, so the comparison slightly favours kk+ru.
 - **Decision.** Swapping the calibration text is not enough to beat the popular files at 10 GB, so we do not publish these files. The lever is the bit allocation: language-aware allocation at this size is the next step, together with an exam on legal and banking documents.
 - [Notebook](../notebooks/10_kazakh_imatrix_gguf.ipynb) · [data](../experiments/10/)
+
+## 2026-11-16 · Release · Public checkpoints and an independent check of every published number
+
+- **Question.** Can a reader verify every number on the model cards and in the paper from public files alone?
+- **Setup.**
+  - The two checkpoints of notebook 07 (kk+ru 4/3-bit, 15.24 GB; kk+ru 4-bit, 17.39 GB) were made public on Hugging Face, with the Apache-2.0 license text and model cards in English, Russian and Kazakh: [4/3-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit), [4-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit).
+  - A script re-derived every number on the cards from `experiments/06` to `experiments/09` (size, compression, perplexity growth, KazMMLU, Belebele, GPU memory, speed, the GGUF comparison, the equal-memory controls). It also checked the files on the Hub: total weight size, group size 128, 8-bit attention, and the per-expert 3-bit overrides in `quantization_config.dynamic`.
+  - The related-work survey was repeated: the arXiv record of every cited paper was fetched and compared with the survey text.
+- **Result.**
+  - 0 mismatches between the cards and the experiment files; all links resolve. In the 4/3-bit file 59% of experts are stored at 3 bits and the rest at 4 bits; the 4-bit file has no overrides.
+  - Two corrections to our own survey: the 93.6% in the multilingual production comparison is a share of *generative quality on production tasks*, not of quality in general; the over-dispersed-routing study is mainly on gpt-oss-20B.
+  - Eight works on expert-level mixed-precision allocation and on the calibration language in quantization were added to [related work](prior-art.md). Consequence: allocating bits across experts is not new. What we measure is how much the language of the traffic and of the calibration text matters for Kazakh and Russian.
+  - The license text was missing from the checkpoint repositories; it was added, because Apache-2.0 requires passing on a copy.
+- **Observations.**
+  - The cards state what was not evaluated: legal and financial documents, long context, instruction following and multi-turn chat.
+  - The only runtime measured is GPTQModel with a portable kernel (about 1.6 tokens/s on two T4).
+- **Decision.** The files stay labelled a research preview. Next: the full KazMMLU (about 23,000 questions) to resolve the Kazakh trend, and a comparison with other bit-allocation methods.
