@@ -294,3 +294,10 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - The cards state what was not evaluated: legal and financial documents, long context, instruction following and multi-turn chat.
   - The only runtime measured is GPTQModel with a portable kernel (about 1.6 tokens/s on two T4).
 - **Decision.** The files stay labelled a research preview. Next: the full KazMMLU (about 23,000 questions) to resolve the Kazakh trend, and a comparison with other bit-allocation methods.
+
+## 2026-11-16 · Preprint · The study published in three languages
+
+- **Question.** Can a reader cite the results and check them without waiting for a journal?
+- **Setup.** The study was posted as three preprints on Zenodo (CC BY 4.0): the English original and its Russian and Kazakh translations ([English](https://doi.org/10.5281/zenodo.24281161), [Русский](https://doi.org/10.5281/zenodo.24281163), [Қазақша](https://doi.org/10.5281/zenodo.24281169)). Before posting, every number of the English text was compared with the experiment files (46 automated checks), every cited work was compared with its abstract, and the final text was read in full.
+- **Result.** 0 numeric mismatches. Three statements about related work were narrowed to what the sources say (the claims about routing in low-resource languages and about how our allocation uses routing). The files on Zenodo are byte-identical to the files that were checked. The Kazakh translation has not been read by a native speaker; the English version is authoritative.
+- **Decision.** arXiv is postponed: a first submission there needs an endorsement from an established author. Zenodo is the citable record for now. A second version will follow the full KazMMLU run.

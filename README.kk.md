@@ -385,6 +385,31 @@ python3 scripts/plot_qwen3_result.py   # жоғарыдағы графикті e
 
 Сарапшыларды алып тастау (REAP), сарапшылардың тілдік мамандануын зерттеулер және ең жақын жұмыс: ағылшынша калибрлеу сарапшыларды алып тастағанда литва тілін бұзады ([arXiv:2611.07654](https://arxiv.org/abs/2611.07654)). Біз кванттауда қазақ тілі үшін дәл осы әсерді көреміз. Әр жұмыспен салыстыру — [docs/prior-art.kk.md](docs/prior-art.kk.md) ішінде.
 
+## 📄 Мақала
+
+Зерттеу үш тілде препринт (CC BY 4.0) ретінде қолжетімді. Ағылшынша нұсқа — түпнұсқа; орысша және қазақша нұсқалар — аудармалар.
+
+- 🇬🇧 [English](https://doi.org/10.5281/zenodo.24281161)
+- 🇷🇺 [Русский](https://doi.org/10.5281/zenodo.24281163)
+- 🇰🇿 [Қазақша](https://doi.org/10.5281/zenodo.24281169)
+
+**Мақалаға сілтеме жасау үшін** (ағылшынша түпнұсқа):
+
+```bibtex
+@misc{akhmetova2026linguaprune_paper,
+  title     = {LinguaPrune: Language-Aware Mixed-Precision Quantization of a Mixture-of-Experts LLM for Kazakh and Russian},
+  author    = {Akhmetova, Sophia},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.24281161},
+  url       = {https://doi.org/10.5281/zenodo.24281161}
+}
+```
+
+```text
+Akhmetova, S. (2026). LinguaPrune: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
+```
+
 ## 📝 Дәйексөз
 
 <p align="center"><a href="#-дәйексөз"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>

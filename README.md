@@ -385,6 +385,31 @@ python3 scripts/plot_qwen3_result.py   # redraws the figure above from experimen
 
 Expert pruning (REAP), language-specific expert studies, and the closest work: English calibration erodes Lithuanian under expert pruning ([arXiv:2611.07654](https://arxiv.org/abs/2611.07654)). We see the same effect for Kazakh under quantization. The comparison with each is in [docs/prior-art.md](docs/prior-art.md).
 
+## 📄 Paper
+
+The study is available as a preprint (CC BY 4.0) in three languages. The English version is the original; the Russian and Kazakh versions are translations.
+
+- 🇬🇧 [English](https://doi.org/10.5281/zenodo.24281161)
+- 🇷🇺 [Русский](https://doi.org/10.5281/zenodo.24281163)
+- 🇰🇿 [Қазақша](https://doi.org/10.5281/zenodo.24281169)
+
+**To cite the paper** (the English original):
+
+```bibtex
+@misc{akhmetova2026linguaprune_paper,
+  title     = {LinguaPrune: Language-Aware Mixed-Precision Quantization of a Mixture-of-Experts LLM for Kazakh and Russian},
+  author    = {Akhmetova, Sophia},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.24281161},
+  url       = {https://doi.org/10.5281/zenodo.24281161}
+}
+```
+
+```text
+Akhmetova, S. (2026). LinguaPrune: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
+```
+
 ## 📝 Citation
 
 <p align="center"><a href="#-citation"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
