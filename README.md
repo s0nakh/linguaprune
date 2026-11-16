@@ -47,6 +47,8 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 
 **Download (public, Apache-2.0):** [kk+ru 4/3-bit, 15.24 GB](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit) · [kk+ru 4-bit, 17.39 GB](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit). The model cards are in English, Russian and Kazakh.
 
+**Paper (preprint, CC BY 4.0):** [English](https://doi.org/10.5281/zenodo.24281161) · [Русский](https://doi.org/10.5281/zenodo.24281163) · [Қазақша](https://doi.org/10.5281/zenodo.24281169).
+
 **Against the popular quantized versions.** The most downloaded GGUF files of the same model (unsloth, bartowski) were scored on exactly the same exam in llama.cpp ([notebook 09](notebooks/09_popular_quants_on_kazakh.ipynb)). Between 15 and 19 GB, only LinguaPrune stays within 2% for both Kazakh and Russian. Below 14 GB, the popular files lose Kazakh fastest: up to +15.8% at 9.9 GB.
 
 | File | On disk | kk perplexity | ru perplexity | en perplexity |

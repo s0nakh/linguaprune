@@ -47,6 +47,8 @@
 
 **Скачать (открыто, Apache-2.0):** [kk+ru 4/3 бита, 15,24 ГБ](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit) · [kk+ru 4 бита, 17,39 ГБ](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit). Описания моделей на английском, русском и казахском.
 
+**Статья (препринт, CC BY 4.0):** [English](https://doi.org/10.5281/zenodo.24281161) · [Русский](https://doi.org/10.5281/zenodo.24281163) · [Қазақша](https://doi.org/10.5281/zenodo.24281169).
+
 **Против популярных сжатых версий.** Самые скачиваемые файлы GGUF той же модели (unsloth, bartowski) прошли ровно тот же экзамен в llama.cpp ([ноутбук 09](notebooks/09_popular_quants_on_kazakh.ipynb)). От 15 до 19 ГБ только LinguaPrune укладывается в 2% и для казахского, и для русского. Ниже 14 ГБ популярные файлы быстрее всего теряют казахский: до +15,8% на 9,9 ГБ.
 
 | Файл | На диске | Перплексия kk | Перплексия ru | Перплексия en |
