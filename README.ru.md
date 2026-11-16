@@ -24,10 +24,10 @@
 <a href="#-цитирование"><img alt="Cite" src="https://img.shields.io/badge/cite-BibTeX-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
 <a href="#-как-мы-проверяем"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
 <a href="#-как-мы-проверяем"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
-<a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
+<a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%C2%B7%20RU%20%C2%B7%20KK-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
 
-[English](README.md) · [Исследовательский журнал](docs/research-log.ru.md) · [Связанные работы](docs/prior-art.ru.md)
+[English](README.md) · [Қазақша](README.kk.md) · [Исследовательский журнал](docs/research-log.ru.md) · [Связанные работы](docs/prior-art.ru.md)
 
 </div>
 
@@ -44,6 +44,8 @@
 | kk+ru 4 бита | 17,39 ГБ · 3,5× | +1,2% | +1,4% | 64,9% | 71,7% | 76,0% / 92,7% / 94,0% |
 
 Файл в стандартном формате GPTQ. Оценка с диска даёт ровно те же ответы, что и модель в памяти (наибольшая разница 0,0). Данные: [`experiments/07/full/`](experiments/07/full/).
+
+**Скачать (открыто, Apache-2.0):** [kk+ru 4/3 бита, 15,24 ГБ](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit) · [kk+ru 4 бита, 17,39 ГБ](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit). Описания моделей на английском, русском и казахском.
 
 **Против популярных сжатых версий.** Самые скачиваемые файлы GGUF той же модели (unsloth, bartowski) прошли ровно тот же экзамен в llama.cpp ([ноутбук 09](notebooks/09_popular_quants_on_kazakh.ipynb)). От 15 до 19 ГБ только LinguaPrune укладывается в 2% и для казахского, и для русского. Ниже 14 ГБ популярные файлы быстрее всего теряют казахский: до +15,8% на 9,9 ГБ.
 
@@ -343,6 +345,7 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 - ✅ 08 · **Файл работает в GPTQModel и отвечает на kk, ru и en**; перплексия совпадает с ноутбуком 07 в пределах 0,1%
 - ✅ 09 · **Против 9 популярных файлов GGUF: только LinguaPrune держит перплексию kk и ru в пределах 2% на 15–19 ГБ**; по KazMMLU ничья в пределах шума
 - ✅ 10 · В 2 битах казахский и русский калибровочный текст снижает потерю казахского лишь с +18,9% до +15,1%; распределение битов важнее ([журнал](docs/research-log.ru.md#2026-11-14--10--важен-ли-язык-калибровки-в-2-битах))
+- ✅ **Оба файла открыты на Hugging Face** ([4/3 бита](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit), [4 бита](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit)), описания на английском, русском и казахском
 - 🔥 Файл ~2,5 бита с учётом языка на 10–12 ГБ, где популярные файлы теряют 10–16% казахского
 - 🔥 Сборка GGUF с нашим распределением битов для llama.cpp / Ollama / LM Studio; публикация на Hugging Face
 - 🔥 Экзамен по законам и официальным документам Казахстана на kk и ru

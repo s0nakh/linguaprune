@@ -24,10 +24,10 @@ First target: Kazakh 🇰🇿 + Russian.
 <a href="#-citation"><img alt="Cite" src="https://img.shields.io/badge/cite-BibTeX-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a>
 <a href="#-evaluation"><img alt="Eval" src="https://img.shields.io/badge/eval-KazMMLU%20%C2%B7%20Belebele-00C2FF?style=for-the-badge&labelColor=0D1117&logo=meta&logoColor=white"></a>
 <a href="#-evaluation"><img alt="Languages" src="https://img.shields.io/badge/languages-kk%20%C2%B7%20ru-39FF14?style=for-the-badge&labelColor=0D1117&logo=googletranslate&logoColor=white"></a>
-<a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%2B%20RU-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
+<a href="README.ru.md"><img alt="Docs" src="https://img.shields.io/badge/docs-EN%20%C2%B7%20RU%20%C2%B7%20KK-A020F0?style=for-the-badge&labelColor=0D1117&logo=readthedocs&logoColor=white"></a>
 </p>
 
-[Русская версия](README.ru.md) · [Research log](docs/research-log.md) · [Related work](docs/prior-art.md)
+[Русская версия](README.ru.md) · [Қазақша нұсқасы](README.kk.md) · [Research log](docs/research-log.md) · [Related work](docs/prior-art.md)
 
 </div>
 
@@ -44,6 +44,8 @@ First target: Kazakh 🇰🇿 + Russian.
 | kk+ru 4-bit | 17.39 GB · 3.5× | +1.2% | +1.4% | 64.9% | 71.7% | 76.0% / 92.7% / 94.0% |
 
 The file uses the standard GPTQ layout. Scoring it from disk gives exactly the same answers as the model in memory (largest difference 0.0). Data: [`experiments/07/full/`](experiments/07/full/).
+
+**Download (public, Apache-2.0):** [kk+ru 4/3-bit, 15.24 GB](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit) · [kk+ru 4-bit, 17.39 GB](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit). The model cards are in English, Russian and Kazakh.
 
 **Against the popular quantized versions.** The most downloaded GGUF files of the same model (unsloth, bartowski) were scored on exactly the same exam in llama.cpp ([notebook 09](notebooks/09_popular_quants_on_kazakh.ipynb)). Between 15 and 19 GB, only LinguaPrune stays within 2% for both Kazakh and Russian. Below 14 GB, the popular files lose Kazakh fastest: up to +15.8% at 9.9 GB.
 
@@ -343,6 +345,7 @@ Data: [`experiments/10/`](experiments/10/)
 - ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
 - ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru perplexity within 2% at 15–19 GB**; KazMMLU is a tie within noise
 - ✅ 10 · At 2 bits a Kazakh+Russian calibration text cuts the Kazakh loss only from +18.9% to +15.1%; the bit allocation matters more ([log](docs/research-log.md#2026-11-14--10--does-the-calibration-language-matter-at-2-bits))
+- ✅ **Both files are public on Hugging Face** ([4/3-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit), [4-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit)) with model cards in English, Russian and Kazakh
 - 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
 - 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru

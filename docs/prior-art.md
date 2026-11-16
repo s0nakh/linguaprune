@@ -1,6 +1,6 @@
 # Related work
 
-*Survey as of 2026-11-10 · [Русская версия](prior-art.ru.md)*
+*Survey as of 2026-11-16 · [Русская версия](prior-art.ru.md) · [Қазақша нұсқасы](prior-art.kk.md)*
 
 Sources: arXiv abstracts and GitHub/Hugging Face pages, each checked by hand. Numbers are quoted from the abstracts; full papers have not been read yet.
 
@@ -9,15 +9,23 @@ Sources: arXiv abstracts and GitHub/Hugging Face pages, each checked by hand. Nu
 | Work | What it shows | Link |
 |---|---|---|
 | English Calibration Erodes Lithuanian (2026-11) | REAP pruning of 25% of experts. With English calibration, Lithuanian loses 21.4 points while English loses 1.7. Lithuanian calibration recovers most of the loss. **Closest to this project.** | [arXiv:2611.07654](https://arxiv.org/abs/2611.07654) |
-| Prune, Don't Merge (2026-11) | Pruning beats merging. Qwen3-30B keeps 93.6% of quality with 25% of experts removed. | [arXiv:2611.12240](https://arxiv.org/abs/2611.12240) |
+| Prune, Don't Merge (2026-11) | Pruning beats merging on five multilingual production tasks. At 25% of experts removed, REAP keeps 93.6% of Qwen3-30B's generative quality. | [arXiv:2611.12240](https://arxiv.org/abs/2611.12240) |
 | Towards Robust Calibration Dataset for Domain-General MoE Pruning (2026-10) | **The opposite finding:** English-only calibration transfers to 7 languages. | [arXiv:2610.15578](https://arxiv.org/abs/2610.15578) |
 | Extracting Translation Specialists (2026) | Experts relevant to translation; 50% pruned with negligible loss. | [arXiv:2605.28042](https://arxiv.org/abs/2605.28042) |
 | Memory-efficient NLLB-200 (2022) | Language-specific expert pruning in a machine-translation MoE, up to 80% of experts. | [arXiv:2212.09811](https://arxiv.org/abs/2212.09811) |
 | REAP (Cerebras, 2025) | Expert score = gate value × expert output norm. Apache-2.0 code. | [arXiv:2510.13999](https://arxiv.org/abs/2510.13999), [GitHub](https://github.com/CerebrasResearch/reap) |
 | How to Score Experts (2026) | Task-specific pruning benefits from keeping frequency and gate information. | [arXiv:2606.15716](https://arxiv.org/abs/2606.15716) |
-| MESA (2026-09) | Frequency-based and activation-based criteria fail on different domains. Tested on OLMoE-1B-7B. | [arXiv:2609.04453](https://arxiv.org/abs/2609.04453) |
+| MESA (2026-09) | With over-dispersed routing, perplexity does not predict downstream accuracy and no single scoring criterion wins on all domains (mainly gpt-oss-20B; also OLMoE-1B-7B). | [arXiv:2609.04453](https://arxiv.org/abs/2609.04453) |
 | MoEXBench (2026-08) | Pruning + quantization: pruning is the main source of degradation, and the two effects do not simply add up. | [arXiv:2608.21693](https://arxiv.org/abs/2608.21693) |
 | Collaborative Compression (2025) | DeepSeek-V3: pruning + mixed precision beats uniform low-bit quantization at equal memory. | [arXiv:2509.25689](https://arxiv.org/abs/2509.25689) |
+| Calibrating Beyond English (2026-01) | GPTQ and AWQ on 10 languages (Llama3.1 8B, Qwen2.5 7B): non-English and multilingual calibration lowers perplexity against English-only; matching the evaluation language helps most. Dense models. | [arXiv:2601.18306](https://arxiv.org/abs/2601.18306) |
+| The Uneven Impact of Post-Training Quantization in Machine Translation (2025) | 55 languages, five LLMs from 1.7B to 70B: 4-bit mostly keeps high-resource languages, while low-resource and typologically diverse languages degrade, especially at 2 bits. | [arXiv:2508.20893](https://arxiv.org/abs/2508.20893) |
+| QuantMoE-Bench (2024) | Fine-grained mixed precision for MoE quantization; different MoE structures need different numbers of bits. | [arXiv:2406.08155](https://arxiv.org/abs/2406.08155) |
+| MC, Mixture Compressor (2024) | Bit-width allocation across experts as a linear program over expert importance, plus dynamic pruning. | [arXiv:2410.06270](https://arxiv.org/abs/2410.06270) |
+| MoPEQ (2025) | Per-expert bit width from Hessian-trace sensitivity instead of activation frequency. | [arXiv:2509.02512](https://arxiv.org/abs/2509.02512) |
+| GEMQ (2026-05) | Global expert-level mixed-precision allocation. | [arXiv:2605.23078](https://arxiv.org/abs/2605.23078) |
+| Q-Strata (2026-08) | Hierarchical bit allocation for MoE quantization. | [arXiv:2608.30564](https://arxiv.org/abs/2608.30564) |
+| AlphaQ (2026-06) | Calibration-free bit allocation from weight-spectrum heavy-tailedness; reports gains over calibration-based baselines at matched bit budgets. | [arXiv:2606.04980](https://arxiv.org/abs/2606.04980) |
 
 Routing analyses:
 - Language-specific experts sit in early and late layers; middle layers are shared across languages ([arXiv:2510.04694](https://arxiv.org/abs/2510.04694), [arXiv:2601.14050](https://arxiv.org/abs/2601.14050)).
@@ -28,7 +36,9 @@ Routing analyses:
 **Already done by others:**
 - keeping the experts that language X needs;
 - calibrating REAP on the target language;
-- combining pruning with quantization.
+- combining pruning with quantization;
+- giving different experts different bit widths (QuantMoE-Bench, MC, MoPEQ, GEMQ, Q-Strata, AlphaQ);
+- non-English calibration for quantizing dense models (Calibrating Beyond English).
 
 **Open questions this project addresses:**
 1. Kazakh and Russian (a Turkic language and Cyrillic script): no published work yet.
