@@ -17,3 +17,15 @@ keywords:
   - Kazakh
   - Russian
   - low-resource languages
+references:
+  - type: article
+    status: preprint
+    title: "LinguaPrune: Language-Aware Mixed-Precision Quantization of a Mixture-of-Experts LLM for Kazakh and Russian"
+    authors:
+      - family-names: Akhmetova
+        given-names: Sophia
+    year: 2026
+    doi: "10.5281/zenodo.24281161"
+    url: "https://doi.org/10.5281/zenodo.24281161"
+    publisher:
+      name: Zenodo
