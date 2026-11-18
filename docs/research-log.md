@@ -238,11 +238,11 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   ![Kazakh loss vs. size](../assets/kazakh_vs_gguf.png)
 
 - **Observations.**
-  - Between 15 and 19 GB, only the LinguaPrune files stay within 2% for both Kazakh and Russian. The 4/3-bit file is 1.1 GB smaller than IQ4_XS and loses 3.4× less Kazakh and 9× less Russian. *(Superseded on 2026-11-19: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
+  - Between 15 and 19 GB, only the LinguaPrune files stay within 2% for both Kazakh and Russian. The 4/3-bit file is 1.1 GB smaller than IQ4_XS and loses 3.4× less Kazakh and 9× less Russian. *(Superseded on 2026-11-18: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
   - The engine check costs 0.6–0.8% even at 6 bits, so part of every GGUF number is the runtime, not the quantization. Subtracting it, Q4_K_M still loses more Kazakh (+1.6%) than either LinguaPrune file, which are larger by nothing (4-bit) or 3.3 GB smaller (4/3-bit).
   - We pay in English: +3.2% for the 4/3-bit file vs. +2.1% for Q4_K_M. That is the trade we chose.
   - Below 14 GB, popular files lose Kazakh fastest. At 2 bits Kazakh loses 1.5–2.8× more than Russian, and KazMMLU kk drops 5.4 points for IQ2_M at 9.9 GB.
-  - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions. The lead is in perplexity (keeping the text), not yet in knowledge: UD-Q3_K_XL at 13.8 GB scores 66.2% on KazMMLU kk vs. 65.1% for our 15.24 GB file. *(Superseded on 2026-11-19: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
+  - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions. The lead is in perplexity (keeping the text), not yet in knowledge: UD-Q3_K_XL at 13.8 GB scores 66.2% on KazMMLU kk vs. 65.1% for our 15.24 GB file. *(Superseded on 2026-11-18: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
   - Not compared: speed. GGUF runs fast in llama.cpp; our files still run only in the slow GPTQModel kernel.
 - **Decision.** The open space is 10–12 GB, where popular files lose 10–16% of Kazakh. Next: a language-aware ~2.5-bit file aimed at that range with kk and ru within 2%, and a GGUF build of our bit allocation so it runs at llama.cpp speed.
 - [Notebook](../notebooks/09_popular_quants_on_kazakh.ipynb) · [data](../experiments/09/)
@@ -302,7 +302,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 - **Result.** 0 numeric mismatches. Three statements about related work were narrowed to what the sources say (the claims about routing in low-resource languages and about how our allocation uses routing). The files on Zenodo are byte-identical to the files that were checked. The Kazakh translation has not been read by a native speaker; the English version is authoritative.
 - **Decision.** arXiv is postponed: a first submission there needs an endorsement from an established author. Zenodo is the citable record for now. A second version will follow the full KazMMLU run.
 
-## 2026-11-19 · 07b · The full KazMMLU exam, and corrections to earlier statements
+## 2026-11-18 · 07b · The full KazMMLU exam, and corrections to earlier statements
 
 - **Question.** Is the KazMMLU change after compression really "within noise", as the first preprint said on a sample of 370 + 392 questions?
 - **Setup.** [Notebook 07b](../notebooks/07b_full_kazmmlu.py) scores every question of the KazMMLU test split (22,889: 9,870 Kazakh, 13,019 Russian) for the original model and the two files, with the same scorer and prompt format as notebook 07. Paired bootstrap (10,000 resamples) and exact McNemar test: [`experiments/07/kazmmlu_full/`](../experiments/07/kazmmlu_full/).

@@ -1,8 +1,8 @@
 # Related work
 
-*Survey as of 2026-11-19 · [Русская версия](prior-art.ru.md) · [Қазақша нұсқасы](prior-art.kk.md)*
+*Survey as of 2026-11-18 · [Русская версия](prior-art.ru.md) · [Қазақша нұсқасы](prior-art.kk.md)*
 
-Sources: arXiv and GitHub/Hugging Face pages, each checked by hand. The full texts of the works cited in the preprint were read (audits of 2026-11-17 and 2026-11-19); the other rows rest on abstracts.
+Sources: arXiv and GitHub/Hugging Face pages, each checked by hand. The full texts of the works cited in the preprint were read (audits of 2026-11-17 and 2026-11-18); the other rows rest on abstracts.
 
 ## Closest work
 
