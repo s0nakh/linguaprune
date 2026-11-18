@@ -4,12 +4,12 @@
 
 **Языково-ориентированное сжатие MoE-моделей.**
 Измеряем, каких экспертов используют ваши языки, отдаём им биты, калибруем на ваших языках и проверяем, что ничего не сломалось.
-Первая цель — казахский 🇰🇿 + русский.
+Первая цель — казахский 🇰🇿 + русский 🇷🇺.
 
 <p>
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
 <a href="https://github.com/s0nakh/linguaprune/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguaprune/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
-<a href="https://github.com/s0nakh/linguaprune/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
+<a href="https://github.com/s0nakh/linguaprune"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
 <a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
 </p>
@@ -28,7 +28,7 @@
 <a href="https://doi.org/10.5281/zenodo.24281163"><img alt="Paper" src="https://img.shields.io/badge/%D1%81%D1%82%D0%B0%D1%82%D1%8C%D1%8F-Zenodo-1682D4?style=for-the-badge&labelColor=0D1117&logo=zenodo&logoColor=white"></a>
 </p>
 
-[English](README.md) · [Қазақша](README.kk.md) · [Исследовательский журнал](docs/research-log.ru.md) · [Связанные работы](docs/prior-art.ru.md)
+🇬🇧 [English](README.md) · 🇰🇿 [Қазақша](README.kk.md) · [Исследовательский журнал](docs/research-log.ru.md) · [Связанные работы](docs/prior-art.ru.md)
 
 </div>
 
