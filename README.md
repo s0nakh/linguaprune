@@ -40,9 +40,11 @@ First target: Kazakh 🇰🇿 + Russian.
 
 | Qwen3-30B-A3B | On disk | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru / en |
 |---|---|---|---|---|---|---|
-| Original (16-bit) | 61.1 GB | — | — | 66.8% | 71.4% | 77.3% / 92.7% / 92.7% |
-| **kk+ru 4/3-bit** (90% of kk+ru traffic at 4 bits) | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | **65.1%** | **70.9%** | **78.7% / 91.3% / 93.3%** |
-| kk+ru 4-bit | 17.39 GB · 3.5× | +1.2% | +1.4% | 64.9% | 71.7% | 76.0% / 92.7% / 94.0% |
+| Original (16-bit) | 61.1 GB | — | — | 62.1% | 70.9% | 77.3% / 92.7% / 92.7% |
+| **kk+ru 4/3-bit** (90% of kk+ru traffic at 4 bits) | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | **60.4%** | **69.3%** | **78.7% / 91.3% / 93.3%** |
+| kk+ru 4-bit | 17.39 GB · 3.5× | +1.2% | +1.4% | 61.0% | 70.5% | 76.0% / 92.7% / 94.0% |
+
+KazMMLU: full test split, 22,889 questions (9,870 Kazakh, 13,019 Russian). Differences from the original (paired bootstrap, exact McNemar): 4/3-bit −1.8 (kk, p < 10⁻⁷) and −1.6 (ru, p < 10⁻⁹); 4-bit −1.1 (kk, p = 5.5·10⁻⁵) and −0.4 (ru, p = 0.065, not significant). Data and script: [`experiments/07/kazmmlu_full/`](experiments/07/kazmmlu_full/), [notebook 07b](notebooks/07b_full_kazmmlu.py).
 
 The file uses the standard GPTQ layout. Scoring it from disk gives exactly the same answers as the model in memory (largest difference 0.0). Data: [`experiments/07/full/`](experiments/07/full/).
 
@@ -50,7 +52,7 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 
 **Paper (preprint, CC BY 4.0):** [English](https://doi.org/10.5281/zenodo.24281161) · [Русский](https://doi.org/10.5281/zenodo.24281163) · [Қазақша](https://doi.org/10.5281/zenodo.24281169).
 
-**Against the popular quantized versions.** The most downloaded GGUF files of the same model (unsloth, bartowski) were scored on exactly the same exam in llama.cpp ([notebook 09](notebooks/09_popular_quants_on_kazakh.ipynb)). Between 15 and 19 GB, only LinguaPrune stays within 2% for both Kazakh and Russian. Below 14 GB, the popular files lose Kazakh fastest: up to +15.8% at 9.9 GB.
+**Against the popular quantized versions.** The most downloaded GGUF files of the same model (unsloth, bartowski) were scored on exactly the same exam in llama.cpp ([notebook 09](notebooks/09_popular_quants_on_kazakh.ipynb)). Around 15 GB no popular file comes close: the nearest, IQ4_XS at 16.4 GB, loses +4.3% in Kazakh and +3.6% in Russian against +1.3% and +0.4% for our 15.24 GB file. At 17–18 GB our 4-bit file is on par with the best GGUF files (+1.2% and +1.4% against +2.2–2.3%); that gap is within the llama.cpp engine offset of about 0.7 points, so we call it a tie. Below 14 GB, the popular files lose Kazakh fastest: up to +15.8% at 9.9 GB.
 
 | File | On disk | kk perplexity | ru perplexity | en perplexity |
 |---|---|---|---|---|
@@ -64,11 +66,11 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 
 <img src="assets/kazakh_vs_gguf.png" alt="Kazakh perplexity growth vs. file size for LinguaPrune and popular GGUF files" width="820">
 
-This is perplexity, i.e. how well each file keeps Kazakh and Russian text. On the KazMMLU knowledge exam, all files from 13 to 18 GB score 64–66%, within noise: UD-Q3_K_XL at 13.8 GB scores 66.2% vs. our 65.1%. We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
+This is perplexity, i.e. how well each file keeps Kazakh and Russian text. Knowledge is a separate question: on the full KazMMLU exam our 4/3-bit file loses 1.8 points in Kazakh and 1.6 in Russian, and our 4-bit file 1.1 and 0.4 (table above). The GGUF files were scored on a smaller KazMMLU sample (370 + 392 questions), too small to separate files that differ by one or two points, so we make no knowledge claim against them. We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
 
 **Why the language matters.** At equal memory, choosing bits and calibration by English text instead of Kazakh and Russian costs Kazakh 16× more (notebook 06, same pipeline, before the file format):
 
-| Configuration (notebook 06) | Memory | kk perplexity | ru perplexity | KazMMLU kk | KazMMLU ru | Belebele kk / ru |
+| Configuration (notebook 06) | Memory | kk perplexity | ru perplexity | KazMMLU kk (sample) | KazMMLU ru (sample) | Belebele kk / ru |
 |---|---|---|---|---|---|---|
 | Uniform 4-bit, kk+ru calibration | 17.6 GB · 3.5× | +1.7% | +1.9% | 65.1% | 70.9% | 77.3% / 93.3% |
 | kk+ru 4/3-bit, 90% of traffic at 4 bits | 15.5 GB · 3.9× | +0.9% | +1.0% | 64.1% | 71.7% | 77.3% / 92.7% |
@@ -78,14 +80,14 @@ This is perplexity, i.e. how well each file keeps Kazakh and Russian text. On th
 <img src="assets/qwen3_result.png" alt="Perplexity growth for Kazakh and Russian per configuration" width="820">
 
 > [!IMPORTANT]
-> **The target was fixed before the run and is met:** at least 3.5× smaller than 16-bit, perplexity growth of at most 2% for both kk and ru, and no KazMMLU drop beyond noise.
+> **The target was fixed before the run. Two of its three parts are met:** at least 3.5× smaller than 16-bit, and perplexity growth of at most 2% for both kk and ru. The third, no significant KazMMLU drop, is not met: on the full exam the 4/3-bit file loses 1.8 and 1.6 points.
 > At the same memory, choosing bits and calibration by English text costs Kazakh **16× more** (+14.3% vs. +0.9%).
 
 > [!WARNING]
 > **What this result is not (yet):**
 > - The file loads and answers questions in Kazakh, Russian and English in [GPTQModel](https://github.com/ModelCloud/GPTQModel) ([notebook 08](notebooks/08_run_with_gptqmodel.ipynb)), but slowly (about 1.6 tokens/s on two T4 with the portable kernel). vLLM and Ollama / LM Studio are the [next step](#roadmap).
-> - KazMMLU for Kazakh trends down: −1.6 points for the file, −2.7 in notebook 06 (paired 95% CI −5.4 to 0.0, McNemar p = 0.08). That is not significant on 370 questions, so the full KazMMLU run comes next.
-> - One model, one seed, 762 KazMMLU questions and 150 Belebele passages per language.
+> - KazMMLU: on the full exam (22,889 questions) the 4/3-bit file loses 1.8 points in Kazakh and 1.6 in Russian, and the 4-bit file 1.1 and 0.4 (the Russian 4-bit difference is not significant); see [`experiments/07/kazmmlu_full/`](experiments/07/kazmmlu_full/).
+> - One model, one seed. The controls and the GGUF comparison use a 762-question KazMMLU sample and 150 Belebele passages per language. We did not compare traffic-guided bit allocation with a uniform or random allocation at equal memory.
 
 All raw scores, per question: [`experiments/07/full/`](experiments/07/full/) and [`experiments/06/full/`](experiments/06/full/). The paired tests are in the [research log](docs/research-log.md#2026-11-12--06--qwen3-30b-a3b-compressed-4).
 
@@ -95,7 +97,7 @@ Sovereign and multilingual MoE models are huge, and Kazakh users rarely need wha
 A 30B MoE in 16-bit needs 61 GB, which means a server GPU. At 15.24 GB the weights would fit a 24 GB consumer card, but common runtimes cannot yet run different bit widths for experts of the same layer; that is part of the next step.
 
 The open question is *which* weights can lose precision without hurting a low-resource language.
-Standard quantizers calibrate on English text. We show on Qwen3 that this choice alone costs Kazakh 16× more quality at the same memory.
+Standard quantizers calibrate on English text. We show on Qwen3 that choosing bits and calibration text by English instead of Kazakh and Russian costs Kazakh 16× more quality at the same memory.
 
 > [!NOTE]
 > This is an **empirical study and an open tool**, not a brand-new algorithm. GPTQ ([arXiv:2210.17323](https://arxiv.org/abs/2210.17323)), expert pruning (e.g. REAP) and language-specific pruning exist already; see [related work](docs/prior-art.md).
@@ -260,7 +262,7 @@ Data: [`experiments/06/`](experiments/06/)
 </details>
 
 <details>
-<summary><b>07 · A real 15.24 GB file: 4.0× smaller, Kazakh and Russian within 2%</b></summary>
+<summary><b>07 · A real 15.24 GB file: 4.0× smaller, Kazakh and Russian perplexity within 2%</b></summary>
 
 <br>
 
@@ -268,11 +270,11 @@ The compressed model is written as real GPTQ files and every score is taken from
 
 | Configuration | On disk | kk ppl | ru ppl | KazMMLU kk | KazMMLU ru | Belebele kk / ru / en |
 |---|---|---|---|---|---|---|
-| original | 61.1 GB | — | — | 66.8% | 71.4% | 77.3 / 92.7 / 92.7% |
-| **kk+ru 4/3 @90%** | **15.24 GB (4.0×)** | **+1.3%** | **+0.4%** | 65.1% | 70.9% | 78.7 / 91.3 / 93.3% |
-| kk+ru 4-bit | 17.39 GB (3.5×) | +1.2% | +1.4% | 64.9% | 71.7% | 76.0 / 92.7 / 94.0% |
+| original | 61.1 GB | — | — | 62.1% | 70.9% | 77.3 / 92.7 / 92.7% |
+| **kk+ru 4/3 @90%** | **15.24 GB (4.0×)** | **+1.3%** | **+0.4%** | 60.4% | 69.3% | 78.7 / 91.3 / 93.3% |
+| kk+ru 4-bit | 17.39 GB (3.5×) | +1.2% | +1.4% | 61.0% | 70.5% | 76.0 / 92.7 / 94.0% |
 
-Data: [`experiments/07/full/`](experiments/07/full/)
+Data: [`experiments/07/full/`](experiments/07/full/) · [`experiments/07/kazmmlu_full/`](experiments/07/kazmmlu_full/)
 </details>
 
 <details>
@@ -291,13 +293,13 @@ Data: [`experiments/08/`](experiments/08/)
 </details>
 
 <details>
-<summary><b>09 · Against 9 popular GGUF files: only LinguaPrune keeps kk and ru within 2% at 15–19 GB</b></summary>
+<summary><b>09 · Against 9 popular GGUF files: no popular file comes close at 15 GB, a tie at 17–18 GB</b></summary>
 
 <br>
 
-Perplexity growth vs. 16-bit on the same exam in llama.cpp. KazMMLU differences above 12 GB are within noise; the lead is in keeping the text, not yet in knowledge.
+Perplexity growth vs. 16-bit on the same exam in llama.cpp. KazMMLU here is the 370 + 392 question sample, too small to separate files within one or two points; the lead is in keeping the text. Full-exam KazMMLU for our files is in the table at the top.
 
-| Model | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+| Model | On disk | kk | ru | en | KazMMLU kk / ru (sample) | Belebele kk |
 |---|---|---|---|---|---|---|
 | Q6_K (engine check) | 25.09 GB · 2.4× | +0.6% | +0.7% | +0.8% | 66.2 / 72.4 | 76.7 |
 | Q4_K_M | 18.56 GB · 3.3× | +2.2% | +2.2% | +2.1% | 64.3 / 71.4 | 78.7 |
@@ -323,7 +325,7 @@ Data: [`experiments/09/`](experiments/09/)
 
 Same source file and type (IQ2_M, 10.17 GB); only the text used for the importance matrix changes. UD-IQ2_M, with its own per-tensor recipe, is the reference.
 
-| File | On disk | kk | ru | en | KazMMLU kk / ru | Belebele kk |
+| File | On disk | kk | ru | en | KazMMLU kk / ru (sample) | Belebele kk |
 |---|---|---|---|---|---|---|
 | UD-IQ2_M (unsloth) | 10.85 GB | **+10.0%** | **+5.3%** | **+6.7%** | 65.4 / 70.4 | 72.0 |
 | IQ2_M · kk+ru imatrix | 10.17 GB | +15.1% | +9.3% | +13.8% | 61.4 / 68.1 | 76.0 |
@@ -344,15 +346,16 @@ Data: [`experiments/10/`](experiments/10/)
 
 - ✅ 01–05 · Routing profile, pruning, physical removal, mixed precision, GPTQ on OLMoE
 - ✅ 06 · Qwen3-30B-A3B: at equal memory, English calibration costs Kazakh 16× more than kk+ru
-- ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru within 2%, scored from disk**
+- ✅ 07 · **A real 15.24 GB file (4.0× smaller), kk/ru perplexity within 2%, scored from disk**
 - ✅ 08 · **The file runs in GPTQModel and answers in kk, ru and en**; perplexity matches notebook 07 within 0.1%
-- ✅ 09 · **Against 9 popular GGUF files: only LinguaPrune keeps kk and ru perplexity within 2% at 15–19 GB**; KazMMLU is a tie within noise
+- ✅ 09 · **Against 9 popular GGUF files: no popular file comes close at 15 GB (nearest +4.3% / +3.6% vs. our +1.3% / +0.4%); a tie at 17–18 GB**
 - ✅ 10 · At 2 bits a Kazakh+Russian calibration text cuts the Kazakh loss only from +18.9% to +15.1%; the bit allocation matters more ([log](docs/research-log.md#2026-11-14--10--does-the-calibration-language-matter-at-2-bits))
 - ✅ **Both files are public on Hugging Face** ([4/3-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit), [4-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit)) with model cards in English, Russian and Kazakh
 - 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
 - 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru
-- ⬜ Full KazMMLU and MERA to settle the 2–3 point trend for Kazakh
+- ✅ 07b · Full KazMMLU (22,889 questions) for the original and both files: −1.8/−1.6 points (4/3-bit), −1.1/−0.4 (4-bit)
+- ⬜ MERA, and a control with uniform or random bit allocation at equal memory
 - ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
 

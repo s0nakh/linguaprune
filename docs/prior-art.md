@@ -1,8 +1,8 @@
 # Related work
 
-*Survey as of 2026-11-16 · [Русская версия](prior-art.ru.md) · [Қазақша нұсқасы](prior-art.kk.md)*
+*Survey as of 2026-11-19 · [Русская версия](prior-art.ru.md) · [Қазақша нұсқасы](prior-art.kk.md)*
 
-Sources: arXiv abstracts and GitHub/Hugging Face pages, each checked by hand. Numbers are quoted from the abstracts; full papers have not been read yet.
+Sources: arXiv and GitHub/Hugging Face pages, each checked by hand. The full texts of the works cited in the preprint were read (audits of 2026-11-17 and 2026-11-19); the other rows rest on abstracts.
 
 ## Closest work
 
@@ -26,6 +26,12 @@ Sources: arXiv abstracts and GitHub/Hugging Face pages, each checked by hand. Nu
 | GEMQ (2026-05) | Global expert-level mixed-precision allocation. | [arXiv:2605.23078](https://arxiv.org/abs/2605.23078) |
 | Q-Strata (2026-08) | Hierarchical bit allocation for MoE quantization. | [arXiv:2608.30564](https://arxiv.org/abs/2608.30564) |
 | AlphaQ (2026-06) | Calibration-free bit allocation from weight-spectrum heavy-tailedness; reports gains over calibration-based baselines at matched bit budgets. | [arXiv:2606.04980](https://arxiv.org/abs/2606.04980) |
+| Limitations of language-targeted pruning (Kurz et al., TACL, 2025) | Dense models, Wanda and SparseGPT pruning with 6 calibration languages, plus a GPTQ experiment (4 and 8 bits, LLaMA-3-8B): target-language calibration keeps perplexity but does not consistently improve downstream tasks. No Kazakh, no MoE. | [arXiv:2408.14398](https://arxiv.org/abs/2408.14398) |
+| Deep Language Geometry (Shamrai and Hamolia, 2025) | SparseGPT importance scores over 106 languages (Kazakh and Russian included) give a metric space of languages; no model is compressed. | [arXiv:2508.11676](https://arxiv.org/abs/2508.11676) |
+| BitsMoE (2026-09) | Integer-program bit allocation over spectral components of experts; English C4 calibration; no low-resource language. | [arXiv:2606.00079](https://arxiv.org/abs/2606.00079) |
+| DuoRate (2026-10) | Two-rate per-expert precision allocation for serving; in its decode-rate formulation routing frequency cancels from the per-expert choice; English benchmarks. | [arXiv:2610.13328](https://arxiv.org/abs/2610.13328) |
+| Routing is not a quantization proxy (Liu, 2026-10) | Qwen-3.6-35B-A3B on code tasks: layer-wise allocation guided by routing statistics does not beat uniform or random allocation at equal bits. Per-expert allocation not tested. | [arXiv:2610.20826](https://arxiv.org/abs/2610.20826) |
+| Language Routing Isolation (Zheng et al., 2026) | Phi-3.5-MoE and Qwen3-30B-A3B: high- and low-resource languages activate largely disjoint experts; subnetwork fine-tuning, no compression. | [arXiv:2604.03592](https://arxiv.org/abs/2604.03592) |
 
 Routing analyses:
 - Language-specific experts sit in early and late layers; middle layers are shared across languages ([arXiv:2510.04694](https://arxiv.org/abs/2510.04694), [arXiv:2601.14050](https://arxiv.org/abs/2601.14050)).

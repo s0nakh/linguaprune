@@ -1,0 +1,47 @@
+{
+ "versions": {
+  "python": "3.13.16",
+  "torch": "2.11.0+cu130",
+  "transformers": "5.20.2",
+  "datasets": "4.8.5",
+  "linguaprune": "0.6.1",
+  "model": "4bit",
+  "dry": false,
+  "timing": false
+ },
+ "n": 22889,
+ "minutes": 190.21487087011337,
+ "accuracy": {
+  "kk": 0.610435663627153,
+  "ru": 0.704892848913127
+ },
+ "count": {
+  "kk": 9870,
+  "ru": 13019
+ },
+ "chunk_minutes": [
+  17.171774089336395,
+  16.863102785746257,
+  18.145011270046233,
+  18.41054679552714,
+  19.690707429250082,
+  14.416611913839976,
+  14.583851663271586,
+  13.828945529460906,
+  14.542822825908662,
+  15.475815618038178,
+  14.254605484008788,
+  10.03196789820989
+ ],
+ "reproduction": {
+  "old_questions": 762,
+  "agree": 739,
+  "agreement": 0.9698162729658792,
+  "missing": 0
+ },
+ "reproduction_corrected": {
+  "old_questions": 762,
+  "identical_answers": 762,
+  "note": "The in-notebook check above matched questions by text only, and 71 question texts occur twice with different options, so it undercounts. reproduction_check.py matches on question text and options."
+ }
+}
