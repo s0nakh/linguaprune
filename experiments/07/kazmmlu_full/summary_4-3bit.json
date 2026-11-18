@@ -35,13 +35,11 @@
  ],
  "reproduction": {
   "old_questions": 762,
-  "agree": 740,
-  "agreement": 0.9711286089238845,
-  "missing": 0
- },
- "reproduction_corrected": {
-  "old_questions": 762,
   "identical_answers": 762,
-  "note": "The in-notebook check above matched questions by text only, and 71 question texts occur twice with different options, so it undercounts. reproduction_check.py matches on question text and options."
+  "method": "questions matched by text and options (reproduction_check.py)",
+  "superseded_in_notebook_output": {
+   "agree": 740,
+   "reason": "the first version of the notebook check matched by question text only; 71 texts occur twice with different options. Fixed in notebook 07b."
+  }
  }
 }
