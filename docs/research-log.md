@@ -310,7 +310,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   - Original: 62.1% (kk) and 70.9% (ru). 4/3-bit file: 60.4% and 69.3%, a loss of 1.76 points (95% CI −2.38 to −1.14, p < 10⁻⁷) and 1.58 points (−2.05 to −1.10, p < 10⁻⁹). 4-bit file: 61.0% and 70.5%, a loss of 1.08 points (−1.59 to −0.58, p = 5.5·10⁻⁵) and 0.37 points (−0.75 to 0.02, p = 0.065, not significant).
   - On the 762 questions of the earlier sample the new run gives the same answer as notebook 07 on 761 of 762 (original) and on 762 of 762 (both files); the one difference is a near-tie. Script: `reproduction_check.py` in the same folder.
 - **Corrections.** Earlier statements are superseded: (1) "KazMMLU within noise" held only for the small sample; the full exam shows a small but real loss. (2) The third part of the pre-registered target, no significant KazMMLU drop, was not met. (3) "Only LinguaPrune stays within 2% between 15 and 19 GB" holds around 15 GB only; at 17–18 GB our 4-bit file is on par with the best GGUF files, a difference within the llama.cpp engine offset of about 0.7 points. (4) The English-control comparison changes bit allocation and calibration text together, so it does not isolate the allocation; a control with uniform or random allocation at equal memory is still missing. *(Closed 19.11.2026: see the 07c entry below.)*
-- **Decision.** Preprint version 2 (Zenodo, same concept DOI) and updated model cards carry these numbers. Next: the allocation control, and AlemLLM.
+- **Decision.** Preprint version 2 (Zenodo, same concept DOI) and updated model cards carry these numbers. Next: the allocation control.
 
 ## 2026-11-19 · 07c · Is it the allocation?
 
