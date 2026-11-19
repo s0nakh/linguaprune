@@ -87,7 +87,7 @@ This is perplexity, i.e. how well each file keeps Kazakh and Russian text. Knowl
 > **What this result is not (yet):**
 > - The file loads and answers questions in Kazakh, Russian and English in [GPTQModel](https://github.com/ModelCloud/GPTQModel) ([notebook 08](notebooks/08_run_with_gptqmodel.ipynb)), but slowly (about 1.6 tokens/s on two T4 with the portable kernel). vLLM and Ollama / LM Studio are the [next step](#roadmap).
 > - KazMMLU: on the full exam (22,889 questions) the 4/3-bit file loses 1.8 points in Kazakh and 1.6 in Russian, and the 4-bit file 1.1 and 0.4 (the Russian 4-bit difference is not significant); see [`experiments/07/kazmmlu_full/`](experiments/07/kazmmlu_full/).
-> - One model, one seed. The controls and the GGUF comparison use a 762-question KazMMLU sample and 150 Belebele passages per language. We did not compare traffic-guided bit allocation with a uniform or random allocation at equal memory.
+> - One model, one seed. The controls and the GGUF comparison use a 762-question KazMMLU sample and 150 Belebele passages per language. The allocation control (07c) compares traffic-guided bit allocation with random and least-used allocations at equal memory on this one model and one budget.
 
 All raw scores, per question: [`experiments/07/full/`](experiments/07/full/) and [`experiments/06/full/`](experiments/06/full/). The paired tests are in the [research log](docs/research-log.md#2026-11-12--06--qwen3-30b-a3b-compressed-4).
 
@@ -278,6 +278,26 @@ Data: [`experiments/07/full/`](experiments/07/full/) · [`experiments/07/kazmmlu
 </details>
 
 <details>
+<summary><b>07c · The bit allocation itself matters: random experts at the same memory lose 2.8–3.9× more Kazakh</b></summary>
+
+<br>
+
+Same model, calibration and quantizer; only the choice of 4-bit experts changes, and every layer has the same number of 4-bit experts in every configuration. Perplexity growth over the original:
+
+| 4 bits go to | Kazakh | Russian | English |
+|---|---:|---:|---:|
+| most-used experts (traffic, ours) | +1.3% | +0.4% | +3.2% |
+| random experts, draw 1 | +4.2% | +4.1% | +6.5% |
+| random experts, draw 2 | +3.5% | +1.6% | +4.6% |
+| random experts, draw 3 | +5.0% | +4.0% | +9.4% |
+| least-used experts | +6.3% | +5.4% | +7.5% |
+
+All eight paired comparisons (traffic vs. each random plan and vs. least-used, kk and ru) have 95% bootstrap intervals above zero. Quantization is simulated, as in notebook 07.
+
+Data: [`experiments/07/allocation_control/`](experiments/07/allocation_control/) · [notebook 07c](notebooks/07c_allocation_control.py)
+</details>
+
+<details>
 <summary><b>08 · The files run in GPTQModel and answer in Kazakh, Russian and English</b></summary>
 
 <br>
@@ -355,7 +375,8 @@ Data: [`experiments/10/`](experiments/10/)
 - 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru
 - ✅ 07b · Full KazMMLU (22,889 questions) for the original and both files: −1.8/−1.6 points (4/3-bit), −1.1/−0.4 (4-bit)
-- ⬜ MERA, and a control with uniform or random bit allocation at equal memory
+- ✅ 07c · **The bit allocation matters**: at equal memory, 4 bits for the most-used experts cost +1.3% / +0.4% (kk/ru), random experts +3.5…+5.0% / +1.6…+4.1%, least-used +6.3% / +5.4%
+- ⬜ MERA
 - ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
 

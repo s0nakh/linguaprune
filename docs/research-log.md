@@ -309,5 +309,22 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 - **Result.**
   - Original: 62.1% (kk) and 70.9% (ru). 4/3-bit file: 60.4% and 69.3%, a loss of 1.76 points (95% CI −2.38 to −1.14, p < 10⁻⁷) and 1.58 points (−2.05 to −1.10, p < 10⁻⁹). 4-bit file: 61.0% and 70.5%, a loss of 1.08 points (−1.59 to −0.58, p = 5.5·10⁻⁵) and 0.37 points (−0.75 to 0.02, p = 0.065, not significant).
   - On the 762 questions of the earlier sample the new run gives the same answer as notebook 07 on 761 of 762 (original) and on 762 of 762 (both files); the one difference is a near-tie. Script: `reproduction_check.py` in the same folder.
-- **Corrections.** Earlier statements are superseded: (1) "KazMMLU within noise" held only for the small sample; the full exam shows a small but real loss. (2) The third part of the pre-registered target, no significant KazMMLU drop, was not met. (3) "Only LinguaPrune stays within 2% between 15 and 19 GB" holds around 15 GB only; at 17–18 GB our 4-bit file is on par with the best GGUF files, a difference within the llama.cpp engine offset of about 0.7 points. (4) The English-control comparison changes bit allocation and calibration text together, so it does not isolate the allocation; a control with uniform or random allocation at equal memory is still missing.
+- **Corrections.** Earlier statements are superseded: (1) "KazMMLU within noise" held only for the small sample; the full exam shows a small but real loss. (2) The third part of the pre-registered target, no significant KazMMLU drop, was not met. (3) "Only LinguaPrune stays within 2% between 15 and 19 GB" holds around 15 GB only; at 17–18 GB our 4-bit file is on par with the best GGUF files, a difference within the llama.cpp engine offset of about 0.7 points. (4) The English-control comparison changes bit allocation and calibration text together, so it does not isolate the allocation; a control with uniform or random allocation at equal memory is still missing. *(Closed 19.11.2026: see the 07c entry below.)*
 - **Decision.** Preprint version 2 (Zenodo, same concept DOI) and updated model cards carry these numbers. Next: the allocation control, and AlemLLM.
+
+## 2026-11-19 · 07c · Is it the allocation?
+
+- **Question.** Does giving more bits to the most-used experts matter, or would any choice of experts at the same memory do as well? (The English control in 06/07 changes the allocation and the calibration text together.)
+- **Setup.** [Notebook 07c](../notebooks/07c_allocation_control.py): Qwen3-30B-A3B-Instruct-2507, GPTQ group 128, attention 8-bit, kk+ru Wikipedia calibration, the same exam. Only the choice of 4-bit experts changes: most-used (traffic, notebook 07), random (three seeds), least-used. The number of 4-bit experts in each layer is the same in every configuration (checked in all 48 layers). Quantization is simulated, as in notebook 07. Run time 148 min on Kaggle T4 ×2. Data: [`experiments/07/allocation_control/`](../experiments/07/allocation_control/).
+- **Result.** Perplexity growth over the original, 150 Belebele passages per language:
+
+| 4 bits go to | Kazakh | Russian | English |
+|---|---:|---:|---:|
+| most-used experts (traffic, ours) | +1.3% | +0.4% | +3.2% |
+| random experts, draw 1 | +4.2% | +4.1% | +6.5% |
+| random experts, draw 2 | +3.5% | +1.6% | +4.6% |
+| random experts, draw 3 | +5.0% | +4.0% | +9.4% |
+| least-used experts | +6.3% | +5.4% | +7.5% |
+
+  Paired over the same passages, traffic beats each random plan by 0.022–0.036 nats/token (kk) and 0.012–0.036 (ru); all eight 95% bootstrap intervals exclude zero. Traffic is also better in English, so part of the gain is protecting frequently used experts in general. KazMMLU on the 762-question sample is too noisy to separate the plans.
+- **Decision.** The allocation matters: closes the limitation "allocation is not isolated" from the 07b entry. Goes into preprint version 2.
