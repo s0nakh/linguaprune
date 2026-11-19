@@ -372,7 +372,7 @@ Data: [`experiments/10/`](experiments/10/)
 - ✅ 10 · At 2 bits a Kazakh+Russian calibration text cuts the Kazakh loss only from +18.9% to +15.1%; the bit allocation matters more ([log](docs/research-log.md#2026-11-14--10--does-the-calibration-language-matter-at-2-bits))
 - ✅ **Both files are public on Hugging Face** ([4/3-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4-3bit), [4-bit](https://huggingface.co/s0nakh/Qwen3-30B-A3B-Instruct-2507-kk-ru-GPTQ-4bit)) with model cards in English, Russian and Kazakh
 - 🔥 A language-aware ~2.5-bit file for 10–12 GB, where popular files lose 10–16% of Kazakh
-- 🔥 A GGUF build of our bit allocation for llama.cpp / Ollama / LM Studio; publish on Hugging Face
+- 🔥 A GGUF file for llama.cpp / Ollama / LM Studio tuned on Kazakh and Russian text (stock GGUF stores all experts of a layer in one tensor, so per-expert bits are not possible there; the importance matrix is); publish on Hugging Face
 - 🔥 An exam on Kazakhstan's laws and official documents in kk and ru
 - ✅ 07b · Full KazMMLU (22,889 questions) for the original and both files: −1.8/−1.6 points (4/3-bit), −1.1/−0.4 (4-bit)
 - ✅ 07c · **The bit allocation matters**: at equal memory, 4 bits for the most-used experts cost +1.3% / +0.4% (kk/ru), random experts +3.5…+5.0% / +1.6…+4.1%, least-used +6.3% / +5.4%
