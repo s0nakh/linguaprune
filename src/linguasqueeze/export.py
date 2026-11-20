@@ -14,7 +14,7 @@ Experts of the same layer may have different bit widths (4/3); each module's wid
 `convert_to_gptq_v2` rewrites a checkpoint into GPTQModel's "gptq_v2" layout, which is identical except that
 `qzeros` stores the zero points themselves instead of zero minus one. GPTQModel refuses asymmetric v1
 checkpoints from other producers (older tools wrote overflowing zero points), but loads v2 directly.
-`CheckpointReader` (linguaprune.streaming) dequantizes these tensors transparently, so a written
+`CheckpointReader` (linguasqueeze.streaming) dequantizes these tensors transparently, so a written
 checkpoint can be evaluated by the same streaming code that produced it.
 """
 
@@ -222,7 +222,7 @@ class GPTQCheckpointWriter:
         summary = {**self.description, "group_size": self.group_size, "attention_bits": self.attention_bits,
                    "expert_bits_per_layer": [self.layer_bits[i] for i in range(num_layers)],
                    "tensor_bytes": self.total_bytes}
-        (self.out_dir / "linguaprune.json").write_text(json.dumps(summary, indent=2))
+        (self.out_dir / "linguasqueeze.json").write_text(json.dumps(summary, indent=2))
         return summary
 
 

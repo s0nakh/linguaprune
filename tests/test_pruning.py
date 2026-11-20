@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune import (
+from linguasqueeze import (
     count_parameters,
     find_moe_blocks,
     language_frequency_score,

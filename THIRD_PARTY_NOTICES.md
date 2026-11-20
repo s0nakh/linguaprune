@@ -1,6 +1,6 @@
 # Third-party notices
 
-LinguaPrune's own code is licensed under [Apache-2.0](LICENSE). The research in this repository uses the software, models and datasets below. They keep their own licenses; nothing from them is redistributed here except the measured scores, which are our own results.
+LinguaSqueeze's own code is licensed under [Apache-2.0](LICENSE). The research in this repository uses the software, models and datasets below. They keep their own licenses; nothing from them is redistributed here except the measured scores, which are our own results.
 
 Licenses were checked against each project's repository or Hugging Face card on 2026-11-15.
 

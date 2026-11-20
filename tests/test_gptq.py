@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune.gptq import gptq_quantize, gptq_quantize_batched, quantize_layer_gptq_
-from linguaprune.quant import fake_quantize
+from linguasqueeze.gptq import gptq_quantize, gptq_quantize_batched, quantize_layer_gptq_
+from linguasqueeze.quant import fake_quantize
 
 
 def correlated_inputs(n: int, dim: int, seed: int = 0) -> torch.Tensor:
@@ -91,7 +91,7 @@ def test_batched_gptq_equals_one_matrix_at_a_time():
 
 
 def test_inverse_factor_matches_cholesky_inverse_reference():
-    from linguaprune.gptq import _upper_cholesky_of_inverse
+    from linguasqueeze.gptq import _upper_cholesky_of_inverse
 
     X = correlated_inputs(1024, 128)
     H = X.T @ X + 0.01 * torch.eye(128)

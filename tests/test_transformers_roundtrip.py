@@ -16,7 +16,7 @@ if int(transformers.__version__.split(".")[0]) < 5:
 
 from transformers import AutoModelForCausalLM, OlmoeConfig, OlmoeForCausalLM  # noqa: E402
 
-from linguaprune import find_moe_blocks, masked_experts, prune_experts  # noqa: E402
+from linguasqueeze import find_moe_blocks, masked_experts, prune_experts  # noqa: E402
 
 LAYERS, EXPERTS, TOP_K, KEEP = 2, 8, 2, 5
 

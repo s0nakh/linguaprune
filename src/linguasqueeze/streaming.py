@@ -62,13 +62,13 @@ class CheckpointReader:
         self.checkpoint_format = quant.get("checkpoint_format", "gptq")
 
     def __contains__(self, key: str) -> bool:
-        from linguaprune.export import quantized_base
+        from linguasqueeze.export import quantized_base
 
         return key in self.weight_map or quantized_base(key, self.weight_map) is not None
 
     def get(self, key: str) -> torch.Tensor:
         """A tensor by name; `x.weight` of a GPTQ-quantized module is returned dequantized (float32)."""
-        from linguaprune.export import GPTQ_SUFFIXES, from_gptq, quantized_base
+        from linguasqueeze.export import GPTQ_SUFFIXES, from_gptq, quantized_base
 
         if key not in self.weight_map:
             base = quantized_base(key, self.weight_map)

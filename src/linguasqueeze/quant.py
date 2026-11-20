@@ -18,7 +18,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from linguaprune.pruning import find_moe_blocks
+from linguasqueeze.pruning import find_moe_blocks
 
 NO_QUANT_BITS = 16
 SCALE_ZERO_BITS = 32  # fp16 scale + fp16 zero point per group

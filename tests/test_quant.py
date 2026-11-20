@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune.pruning import find_moe_blocks
-from linguaprune.quant import (
+from linguasqueeze.pruning import find_moe_blocks
+from linguasqueeze.quant import (
     allocate_bits_by_coverage,
     allocate_like,
     expert_memory_bytes,

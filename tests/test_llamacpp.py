@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from linguaprune.exam import ExamItem, check_against_reference, first_items_per_task, summarize
-from linguaprune.llamacpp import (
+from linguasqueeze.exam import ExamItem, check_against_reference, first_items_per_task, summarize
+from linguasqueeze.llamacpp import (
     imatrix_command,
     log_softmax,
     merge_imatrix_command,

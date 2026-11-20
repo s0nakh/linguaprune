@@ -14,7 +14,7 @@ import numpy as np
 import torch
 from torch import nn
 
-from linguaprune.quant import NO_QUANT_BITS, fake_quantize
+from linguasqueeze.quant import NO_QUANT_BITS, fake_quantize
 
 ATTENTION_PROJECTIONS = ("q_proj", "k_proj", "v_proj", "o_proj")
 

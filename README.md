@@ -1,16 +1,18 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="LinguaPrune" width="720">
+<img src="assets/banner.png" alt="LinguaSqueeze" width="720">
 
 **Language-aware compression for Mixture-of-Experts LLMs.**
 Measure which experts your languages use, give them the bits, calibrate on your languages, and check that nothing broke.
 First target: Kazakh 🇰🇿 + Russian 🇷🇺.
 
+<sub>Formerly <b>LinguaPrune</b>: renamed on 20.11.2026 because the method mostly squeezes experts into fewer bits rather than removing them. Old links and <code>import linguaprune</code> keep working.</sub>
+
 <p>
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
-<a href="https://github.com/s0nakh/linguaprune/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguaprune/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
-<a href="https://github.com/s0nakh/linguaprune"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
-<a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
+<a href="https://github.com/s0nakh/linguasqueeze/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguasqueeze/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
+<a href="https://github.com/s0nakh/linguasqueeze"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguasqueeze?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
+<a href="https://github.com/s0nakh/linguasqueeze/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguasqueeze?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
 </p>
 <p>
@@ -58,13 +60,13 @@ The file uses the standard GPTQ layout. Scoring it from disk gives exactly the s
 |---|---|---|---|---|
 | Q4_K_M | 18.56 GB | +2.2% | +2.2% | +2.1% |
 | UD-Q4_K_XL | 17.69 GB | +2.3% | +2.3% | +1.9% |
-| **LinguaPrune kk+ru 4-bit** | **17.39 GB** | **+1.2%** | **+1.4%** | +2.3% |
+| **LinguaSqueeze kk+ru 4-bit** | **17.39 GB** | **+1.2%** | **+1.4%** | +2.3% |
 | IQ4_XS | 16.38 GB | +4.3% | +3.6% | +6.5% |
-| **LinguaPrune kk+ru 4/3-bit** | **15.24 GB** | **+1.3%** | **+0.4%** | +3.2% |
+| **LinguaSqueeze kk+ru 4/3-bit** | **15.24 GB** | **+1.3%** | **+0.4%** | +3.2% |
 | UD-Q3_K_XL | 13.83 GB | +5.7% | +3.0% | +5.7% |
 | UD-Q2_K_XL | 11.79 GB | +12.1% | +7.2% | +10.0% |
 
-<img src="assets/kazakh_vs_gguf.png" alt="Kazakh perplexity growth vs. file size for LinguaPrune and popular GGUF files" width="820">
+<img src="assets/kazakh_vs_gguf.png" alt="Kazakh perplexity growth vs. file size for LinguaSqueeze and popular GGUF files" width="820">
 
 This is perplexity, i.e. how well each file keeps Kazakh and Russian text. Knowledge is a separate question: on the full KazMMLU exam our 4/3-bit file loses 1.8 points in Kazakh and 1.6 in Russian, and our 4-bit file 1.1 and 0.4 (table above). The GGUF files were scored on a smaller KazMMLU sample (370 + 392 questions), too small to separate files that differ by one or two points, so we make no knowledge claim against them. We pay in English (+3.2% vs. +2.1% for Q4_K_M), and llama.cpp itself adds 0.6–0.8% even at 6 bits; the full table with the engine check, KazMMLU and Belebele is in the [research log](docs/research-log.md#2026-11-13--09--against-popular-quantized-versions).
 
@@ -115,7 +117,7 @@ kk + ru text ──► router statistics ──► which experts carry kk/ru tra
        exam: perplexity · KazMMLU · Belebele · factual probes, vs. English control
 ```
 
-- **Streaming.** The 61 GB model never sits in memory. `linguaprune.streaming` loads one decoder layer at a time from the safetensors files, so the whole run (6 configurations) takes 2.5 hours on one free Kaggle T4.
+- **Streaming.** The 61 GB model never sits in memory. `linguasqueeze.streaming` loads one decoder layer at a time from the safetensors files, so the whole run (6 configurations) takes 2.5 hours on one free Kaggle T4.
 - **Attention** stays at 8 bits and embeddings at 16 bits; experts hold almost all of the weights.
 - **Calibration never sees the exam.** Calibration is Wikipedia; the exam is KazMMLU and Belebele. A test in CI checks the separation.
 
@@ -134,16 +136,16 @@ Every compressed model is compared **per question** with the original (paired bo
 
 | # | Notebook | Question | Run your own copy |
 |---|---|---|---|
-| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts does each language use? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
-| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Does pruning by kk+ru routing keep quality? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
-| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Does a physically smaller checkpoint match? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
-| 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | Mixed precision by kk+ru traffic (round-to-nearest) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/04_language_aware_quantization.ipynb) |
-| 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ calibrated on kk+ru, layer by layer | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
-| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B on a free T4: which bits, which calibration | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
-| 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
-| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Does a standard runtime read the file and answer questions? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
-| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | How do popular GGUF files of the same model score on the same Kazakh and Russian exam? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
-| 10 | [`10_kazakh_imatrix_gguf`](notebooks/10_kazakh_imatrix_gguf.ipynb) | Does a Kazakh and Russian calibration text make a better 2-bit GGUF? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/10_kazakh_imatrix_gguf.ipynb) |
+| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts does each language use? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/01_expert_profiling.ipynb) |
+| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | Does pruning by kk+ru routing keep quality? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/02_prune_and_measure.ipynb) |
+| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Does a physically smaller checkpoint match? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/03_remove_and_save.ipynb) |
+| 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | Mixed precision by kk+ru traffic (round-to-nearest) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/04_language_aware_quantization.ipynb) |
+| 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | GPTQ calibrated on kk+ru, layer by layer | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/05_gptq_streaming.ipynb) |
+| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Qwen3-30B-A3B on a free T4: which bits, which calibration | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
+| 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **The result above:** writes the real GPTQ files and re-scores them from disk | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
+| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Does a standard runtime read the file and answer questions? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
+| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | How do popular GGUF files of the same model score on the same Kazakh and Russian exam? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
+| 10 | [`10_kazakh_imatrix_gguf`](notebooks/10_kazakh_imatrix_gguf.ipynb) | Does a Kazakh and Russian calibration text make a better 2-bit GGUF? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/10_kazakh_imatrix_gguf.ipynb) |
 
 Notebooks are bilingual: English first, Russian below each text cell.
 To run one: *Open in Kaggle* → **Accelerator: GPU T4** and **Internet: On** → **Save Version → Save & Run All**. Results land in `/kaggle/working/results`.
@@ -324,9 +326,9 @@ Perplexity growth vs. 16-bit on the same exam in llama.cpp. KazMMLU here is the 
 | Q6_K (engine check) | 25.09 GB · 2.4× | +0.6% | +0.7% | +0.8% | 66.2 / 72.4 | 76.7 |
 | Q4_K_M | 18.56 GB · 3.3× | +2.2% | +2.2% | +2.1% | 64.3 / 71.4 | 78.7 |
 | UD-Q4_K_XL | 17.69 GB · 3.5× | +2.3% | +2.3% | +1.9% | 64.9 / 71.2 | 78.0 |
-| **LinguaPrune kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
+| **LinguaSqueeze kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
 | IQ4_XS | 16.38 GB · 3.7× | +4.3% | +3.6% | +6.5% | 64.9 / 72.2 | 75.3 |
-| **LinguaPrune kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
+| **LinguaSqueeze kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
 | UD-Q3_K_XL | 13.83 GB · 4.4× | +5.7% | +3.0% | +5.7% | 66.2 / 72.4 | 74.0 |
 | UD-IQ3_XXS | 12.91 GB · 4.7× | +5.4% | +3.6% | +3.2% | 65.1 / 70.4 | 75.3 |
 | UD-Q2_K_XL | 11.79 GB · 5.2× | +12.1% | +7.2% | +10.0% | 64.3 / 69.1 | 74.7 |
@@ -377,22 +379,22 @@ Data: [`experiments/10/`](experiments/10/)
 - ✅ 07b · Full KazMMLU (22,889 questions) for the original and both files: −1.8/−1.6 points (4/3-bit), −1.1/−0.4 (4-bit)
 - ✅ 07c · **The bit allocation matters**: at equal memory, 4 bits for the most-used experts cost +1.3% / +0.4% (kk/ru), random experts +3.5…+5.0% / +1.6…+4.1%, least-used +6.3% / +5.4%
 - ⬜ MERA
-- ⬜ `linguaprune` command line: profile → allocate → quantize → export, for any language pair
+- ⬜ `linguasqueeze` command line: profile → allocate → quantize → export, for any language pair
 - ⬜ Second language pair and a second MoE family
 
 ## 📦 Python package
 
 ```bash
-pip install "git+https://github.com/s0nakh/linguaprune@v0.6.1"
+pip install "git+https://github.com/s0nakh/linguasqueeze@v0.7.0"
 ```
 
 | Module | What it does |
 |---|---|
-| `linguaprune.pruning` | Router statistics, expert masks, physical expert removal |
-| `linguaprune.quant` | Bit allocation by language traffic, round-to-nearest, memory accounting |
-| `linguaprune.gptq` | Batched per-expert GPTQ with routed calibration tokens |
-| `linguaprune.streaming` | Layer-by-layer evaluation of models larger than GPU memory |
-| `linguaprune.belebele` | Belebele and multiple-choice scoring |
+| `linguasqueeze.pruning` | Router statistics, expert masks, physical expert removal |
+| `linguasqueeze.quant` | Bit allocation by language traffic, round-to-nearest, memory accounting |
+| `linguasqueeze.gptq` | Batched per-expert GPTQ with routed calibration tokens |
+| `linguasqueeze.streaming` | Layer-by-layer evaluation of models larger than GPU memory |
+| `linguasqueeze.belebele` | Belebele and multiple-choice scoring |
 
 Tests compare every transformation with a reference implementation of the MoE classes from `transformers` 5.x: `pip install -e ".[test]" && pytest`.
 
@@ -431,31 +433,31 @@ The study is available as a preprint (CC BY 4.0) in three languages. The English
 ```
 
 ```text
-Akhmetova, S. (2026). LinguaPrune: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
+Akhmetova, S. (2026). LinguaSqueeze: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
 ```
 
 ## 📝 Citation
 
 <p align="center"><a href="#-citation"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
 
-If you use LinguaPrune in your work, please cite it. Each block below has a copy button; on GitHub, **Cite this repository** in the sidebar gives the same from [`CITATION.cff`](CITATION.cff).
+If you use LinguaSqueeze in your work, please cite it. Each block below has a copy button; on GitHub, **Cite this repository** in the sidebar gives the same from [`CITATION.cff`](CITATION.cff).
 
 **BibTeX**
 
 ```bibtex
 @software{linguaprune2026,
-  title   = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
+  title   = {LinguaSqueeze: Language-aware compression for Mixture-of-Experts LLMs},
   author  = {Akhmetova, Sophia},
   year    = {2026},
   version = {0.6.1},
-  url     = {https://github.com/s0nakh/linguaprune}
+  url     = {https://github.com/s0nakh/linguasqueeze}
 }
 ```
 
 **APA**
 
 ```text
-Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
+Akhmetova, S. (2026). LinguaSqueeze: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguasqueeze
 ```
 
 ## ⚖️ License

@@ -3,9 +3,9 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "linguaprune"
-version = "0.6.1"
-description = "Language-aware expert pruning for Mixture-of-Experts LLMs"
+name = "linguasqueeze"
+version = "0.7.0"
+description = "Language-aware compression of Mixture-of-Experts LLMs for Kazakh, Russian and other languages"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
@@ -17,7 +17,7 @@ eval = ["datasets", "pandas", "transformers>=5"]
 test = ["pytest", "pandas", "transformers>=5"]
 
 [project.urls]
-Homepage = "https://github.com/s0nakh/linguaprune"
+Homepage = "https://github.com/s0nakh/linguasqueeze"
 
 [tool.setuptools.packages.find]
 where = ["src"]

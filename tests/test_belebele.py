@@ -1,4 +1,4 @@
-from linguaprune.belebele import token_span
+from linguasqueeze.belebele import token_span
 
 
 def test_token_span_covers_passage_tokens_only():

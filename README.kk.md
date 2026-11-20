@@ -1,16 +1,18 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="LinguaPrune" width="720">
+<img src="assets/banner.png" alt="LinguaSqueeze" width="720">
 
 **Mixture-of-Experts LLM-дерін тілді ескеріп сығу.**
 Тілдеріңіз қай сарапшыларды қолданатынын өлшейміз, оларға биттер береміз, тілдеріңізде калибрлейміз және ештеңе бұзылмағанын тексереміз.
 Бірінші мақсат: қазақ 🇰🇿 + орыс 🇷🇺 тілі.
 
+<sub>Бұрынғы атауы <b>LinguaPrune</b>: 20.11.2026 қайта аталды, өйткені әдіс сарапшыларды алып тастаудан гөрі көбінесе аз битке сығады. Ескі сілтемелер мен <code>import linguaprune</code> жұмыс істей береді.</sub>
+
 <p>
 <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-A020F0?style=for-the-badge&labelColor=0D1117&logo=apache&logoColor=white"></a>
-<a href="https://github.com/s0nakh/linguaprune/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguaprune/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
-<a href="https://github.com/s0nakh/linguaprune"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
-<a href="https://github.com/s0nakh/linguaprune/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguaprune?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
+<a href="https://github.com/s0nakh/linguasqueeze/actions/workflows/tests.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/s0nakh/linguasqueeze/tests.yml?style=for-the-badge&labelColor=0D1117&logo=githubactions&logoColor=white&label=tests"></a>
+<a href="https://github.com/s0nakh/linguasqueeze"><img alt="Stars" src="https://img.shields.io/github/stars/s0nakh/linguasqueeze?style=for-the-badge&labelColor=0D1117&logo=github&color=A020F0"></a>
+<a href="https://github.com/s0nakh/linguasqueeze/commits/main"><img alt="Last commit" src="https://img.shields.io/github/last-commit/s0nakh/linguasqueeze?style=for-the-badge&labelColor=0D1117&logo=git&logoColor=white&color=39FF14"></a>
 <a href="#roadmap"><img alt="Status" src="https://img.shields.io/badge/status-research%20preview-FF8C00?style=for-the-badge&labelColor=0D1117&logo=jupyter&logoColor=white"></a>
 </p>
 <p>
@@ -58,13 +60,13 @@ KazMMLU: толық сынақ жиыны, 22 889 сұрақ (9 870 қазақш
 |---|---|---|---|---|
 | Q4_K_M | 18,56 ГБ | +2,2% | +2,2% | +2,1% |
 | UD-Q4_K_XL | 17,69 ГБ | +2,3% | +2,3% | +1,9% |
-| **LinguaPrune kk+ru 4 бит** | **17,39 ГБ** | **+1,2%** | **+1,4%** | +2,3% |
+| **LinguaSqueeze kk+ru 4 бит** | **17,39 ГБ** | **+1,2%** | **+1,4%** | +2,3% |
 | IQ4_XS | 16,38 ГБ | +4,3% | +3,6% | +6,5% |
-| **LinguaPrune kk+ru 4/3 бит** | **15,24 ГБ** | **+1,3%** | **+0,4%** | +3,2% |
+| **LinguaSqueeze kk+ru 4/3 бит** | **15,24 ГБ** | **+1,3%** | **+0,4%** | +3,2% |
 | UD-Q3_K_XL | 13,83 ГБ | +5,7% | +3,0% | +5,7% |
 | UD-Q2_K_XL | 11,79 ГБ | +12,1% | +7,2% | +10,0% |
 
-<img src="assets/kk/kazakh_vs_gguf.png" alt="Қазақ тіліндегі перплексия өсімі және файл көлемі: LinguaPrune және танымал GGUF" width="820">
+<img src="assets/kk/kazakh_vs_gguf.png" alt="Қазақ тіліндегі перплексия өсімі және файл көлемі: LinguaSqueeze және танымал GGUF" width="820">
 
 Бұл перплексия, яғни файл қазақ және орыс мәтінін қаншалықты жақсы сақтайды. Білім — бөлек мәселе: толық KazMMLU емтиханында біздің 4/3 биттік файл қазақ тілінде 1,8 тармақ, орыс тілінде 1,6 тармақ жоғалтады, ал 4 биттік файл 1,1 және 0,4 (жоғарыдағы кесте). GGUF файлдары KazMMLU-дың кішірек іріктемесінде (370 + 392 сұрақ) бағаланды, ол бір-екі тармақ айырмасы бар файлдарды ажырату үшін тым кіші, сондықтан білім бойынша олармен салыстырмаймыз. Біз ағылшын тілімен төлейміз (+3,2%, ал Q4_K_M үшін +2,1%), ал llama.cpp-тің өзі 6 битте де 0,6–0,8% қосады; бағдарлама тексерісі, KazMMLU және Belebele бар толық кесте — [зерттеу журналында](docs/research-log.md) (ағылшынша).
 
@@ -115,7 +117,7 @@ kk + ru мәтіні ──► роутер статистикасы ──► �
      емтихан: перплексия · KazMMLU · Belebele · фактілік сұрақтар, ағылшын бақылауымен салыстыру
 ```
 
-- **Ағынды өңдеу.** 61 ГБ модель жадта ешқашан толық тұрмайды. `linguaprune.streaming` safetensors файлдарынан қабатты біртіндеп оқиды, сондықтан бүкіл іске қосу (6 нұсқа) бір тегін Kaggle T4-те 2,5 сағат алады.
+- **Ағынды өңдеу.** 61 ГБ модель жадта ешқашан толық тұрмайды. `linguasqueeze.streaming` safetensors файлдарынан қабатты біртіндеп оқиды, сондықтан бүкіл іске қосу (6 нұсқа) бір тегін Kaggle T4-те 2,5 сағат алады.
 - **Attention** 8 бит күйінде қалады, эмбеддингтер 16 бит күйінде: салмақтардың дерлік барлығы сарапшыларда.
 - **Калибрлеу емтиханды ешқашан көрмейді.** Калибрлеу — Уикипедия, емтихан — KazMMLU және Belebele. Бөлінуді CI-дағы тест тексереді.
 
@@ -134,16 +136,16 @@ kk + ru мәтіні ──► роутер статистикасы ──► �
 
 | # | Дәптер | Сұрақ | Өз көшірмеңізді іске қосу |
 |---|---|---|---|
-| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Әр тіл қай сарапшыларды қолданады? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/01_expert_profiling.ipynb) |
-| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | kk+ru бойынша алып тастау сапаны сақтай ма? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/02_prune_and_measure.ipynb) |
-| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Физикалық кішірейтілген модель сәйкес келе ме? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/03_remove_and_save.ipynb) |
-| 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | kk+ru трафигі бойынша аралас дәлдік (дөңгелектеу) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/04_language_aware_quantization.ipynb) |
-| 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | kk+ru-да калибрленген GPTQ, қабат-қабат | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/05_gptq_streaming.ipynb) |
-| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Тегін T4-тегі Qwen3-30B-A3B: қандай биттер, қандай калибрлеу | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
-| 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **Жоғарыдағы нәтиже:** нақты GPTQ файлдарын жазып, дискіден қайта бағалайды | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
-| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Стандартты бағдарлама файлды оқи ала ма және модель сұрақтарға жауап бере ме? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
-| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | Сол модельдің танымал GGUF файлдары дәл сол қазақша және орысша емтиханды қалай тапсырады? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
-| 10 | [`10_kazakh_imatrix_gguf`](notebooks/10_kazakh_imatrix_gguf.ipynb) | Қазақша және орысша калибрлеу мәтіні 2 биттік GGUF-ті жақсарта ма? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguaprune/blob/main/notebooks/10_kazakh_imatrix_gguf.ipynb) |
+| 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Әр тіл қай сарапшыларды қолданады? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/01_expert_profiling.ipynb) |
+| 02 | [`02_prune_and_measure`](notebooks/02_prune_and_measure.ipynb) | kk+ru бойынша алып тастау сапаны сақтай ма? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/02_prune_and_measure.ipynb) |
+| 03 | [`03_remove_and_save`](notebooks/03_remove_and_save.ipynb) | Физикалық кішірейтілген модель сәйкес келе ме? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/03_remove_and_save.ipynb) |
+| 04 | [`04_language_aware_quantization`](notebooks/04_language_aware_quantization.ipynb) | kk+ru трафигі бойынша аралас дәлдік (дөңгелектеу) | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/04_language_aware_quantization.ipynb) |
+| 05 | [`05_gptq_streaming`](notebooks/05_gptq_streaming.ipynb) | kk+ru-да калибрленген GPTQ, қабат-қабат | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/05_gptq_streaming.ipynb) |
+| 06 | [`06_qwen3_language_aware_gptq`](notebooks/06_qwen3_language_aware_gptq.ipynb) | Тегін T4-тегі Qwen3-30B-A3B: қандай биттер, қандай калибрлеу | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/06_qwen3_language_aware_gptq.ipynb) |
+| 07 | [`07_real_gptq_checkpoint`](notebooks/07_real_gptq_checkpoint.ipynb) | **Жоғарыдағы нәтиже:** нақты GPTQ файлдарын жазып, дискіден қайта бағалайды | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/07_real_gptq_checkpoint.ipynb) |
+| 08 | [`08_run_with_gptqmodel`](notebooks/08_run_with_gptqmodel.ipynb) | Стандартты бағдарлама файлды оқи ала ма және модель сұрақтарға жауап бере ме? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/08_run_with_gptqmodel.ipynb) |
+| 09 | [`09_popular_quants_on_kazakh`](notebooks/09_popular_quants_on_kazakh.ipynb) | Сол модельдің танымал GGUF файлдары дәл сол қазақша және орысша емтиханды қалай тапсырады? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/09_popular_quants_on_kazakh.ipynb) |
+| 10 | [`10_kazakh_imatrix_gguf`](notebooks/10_kazakh_imatrix_gguf.ipynb) | Қазақша және орысша калибрлеу мәтіні 2 биттік GGUF-ті жақсарта ма? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/10_kazakh_imatrix_gguf.ipynb) |
 
 Дәптерлер екі тілді: алдымен ағылшынша, әр мәтін ұяшығының астында орысша.
 Іске қосу: *Open in Kaggle* → **Accelerator: GPU T4** және **Internet: On** → **Save Version → Save & Run All**. Нәтижелер `/kaggle/working/results` ішінде шығады.
@@ -324,9 +326,9 @@ Belebele үзінділеріндегі түпнұсқа модельге қат
 | Q6_K (бағдарлама тексерісі) | 25,09 ГБ · 2,4× | +0,6% | +0,7% | +0,8% | 66,2 / 72,4 | 76,7 |
 | Q4_K_M | 18,56 ГБ · 3,3× | +2,2% | +2,2% | +2,1% | 64,3 / 71,4 | 78,7 |
 | UD-Q4_K_XL | 17,69 ГБ · 3,5× | +2,3% | +2,3% | +1,9% | 64,9 / 71,2 | 78,0 |
-| **LinguaPrune kk+ru 4 бит** | **17,39 ГБ · 3,5×** | **+1,2%** | **+1,4%** | +2,3% | 64,9 / 71,7 | 76,0 |
+| **LinguaSqueeze kk+ru 4 бит** | **17,39 ГБ · 3,5×** | **+1,2%** | **+1,4%** | +2,3% | 64,9 / 71,7 | 76,0 |
 | IQ4_XS | 16,38 ГБ · 3,7× | +4,3% | +3,6% | +6,5% | 64,9 / 72,2 | 75,3 |
-| **LinguaPrune kk+ru 4/3 бит** | **15,24 ГБ · 4,0×** | **+1,3%** | **+0,4%** | +3,2% | 65,1 / 70,9 | 78,7 |
+| **LinguaSqueeze kk+ru 4/3 бит** | **15,24 ГБ · 4,0×** | **+1,3%** | **+0,4%** | +3,2% | 65,1 / 70,9 | 78,7 |
 | UD-Q3_K_XL | 13,83 ГБ · 4,4× | +5,7% | +3,0% | +5,7% | 66,2 / 72,4 | 74,0 |
 | UD-IQ3_XXS | 12,91 ГБ · 4,7× | +5,4% | +3,6% | +3,2% | 65,1 / 70,4 | 75,3 |
 | UD-Q2_K_XL | 11,79 ГБ · 5,2× | +12,1% | +7,2% | +10,0% | 64,3 / 69,1 | 74,7 |
@@ -377,22 +379,22 @@ Belebele үзінділеріндегі түпнұсқа модельге қат
 - ✅ 07b · Түпнұсқа және екі файл үшін толық KazMMLU (22 889 сұрақ): −1,8/−1,6 тармақ (4/3 бит), −1,1/−0,4 (4 бит)
 - ✅ 07c · **Бит бөлу маңызды**: тең жадта 4 бит ең жиі қолданылатын сарапшыларға берілсе +1,3% / +0,4% (kk/ru), кездейсоқ сарапшыларға +3,5…+5,0% / +1,6…+4,1%, ең сирек қолданылатындарға +6,3% / +5,4%
 - ⬜ MERA
-- ⬜ `linguaprune` пәрмен жолы: профиль → биттер → кванттау → экспорт, кез келген тіл жұбы үшін
+- ⬜ `linguasqueeze` пәрмен жолы: профиль → биттер → кванттау → экспорт, кез келген тіл жұбы үшін
 - ⬜ Екінші тіл жұбы және MoE-нің екінші тұқымдасы
 
 ## 📦 Python пакеті
 
 ```bash
-pip install "git+https://github.com/s0nakh/linguaprune@v0.6.1"
+pip install "git+https://github.com/s0nakh/linguasqueeze@v0.7.0"
 ```
 
 | Модуль | Не істейді |
 |---|---|
-| `linguaprune.pruning` | Роутер статистикасы, сарапшылардың маскалары, физикалық жою |
-| `linguaprune.quant` | Тілдік трафик бойынша биттер, дөңгелектеу, жад есебі |
-| `linguaprune.gptq` | Әр сарапшыға оның калибрлеу токендерінде пакеттік GPTQ |
-| `linguaprune.streaming` | GPU жадынан үлкен модельдерді қабат-қабат бағалау |
-| `linguaprune.belebele` | Belebele және таңдау жауаптарын бағалау |
+| `linguasqueeze.pruning` | Роутер статистикасы, сарапшылардың маскалары, физикалық жою |
+| `linguasqueeze.quant` | Тілдік трафик бойынша биттер, дөңгелектеу, жад есебі |
+| `linguasqueeze.gptq` | Әр сарапшыға оның калибрлеу токендерінде пакеттік GPTQ |
+| `linguasqueeze.streaming` | GPU жадынан үлкен модельдерді қабат-қабат бағалау |
+| `linguasqueeze.belebele` | Belebele және таңдау жауаптарын бағалау |
 
 Тесттер әр түрлендіруді `transformers` 5.x-тегі MoE кластарының эталондық іске асырумен салыстырады: `pip install -e ".[test]" && pytest`.
 
@@ -431,31 +433,31 @@ python3 scripts/plot_qwen3_result.py   # жоғарыдағы графикті e
 ```
 
 ```text
-Akhmetova, S. (2026). LinguaPrune: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
+Akhmetova, S. (2026). LinguaSqueeze: Language-aware mixed-precision quantization of a Mixture-of-Experts LLM for Kazakh and Russian [Preprint]. Zenodo. https://doi.org/10.5281/zenodo.24281161
 ```
 
 ## 📝 Дәйексөз
 
 <p align="center"><a href="#-дәйексөз"><img alt="Cite this repository" src="https://img.shields.io/badge/cite%20as-BibTeX%20%C2%B7%20APA-00BFFF?style=for-the-badge&labelColor=0D1117&logo=googlescholar&logoColor=white"></a></p>
 
-LinguaPrune-ді өз жұмысыңызда қолансаңыз, оған сілтеме жасаңыз. Төмендегі әр блоктың көшіру түймесі бар; GitHub-та дәл осыны бүйір бағандағы **Cite this repository** түймесі береді ([`CITATION.cff`](CITATION.cff) деректері бойынша).
+LinguaSqueeze-ді өз жұмысыңызда қолансаңыз, оған сілтеме жасаңыз. Төмендегі әр блоктың көшіру түймесі бар; GitHub-та дәл осыны бүйір бағандағы **Cite this repository** түймесі береді ([`CITATION.cff`](CITATION.cff) деректері бойынша).
 
 **BibTeX**
 
 ```bibtex
 @software{linguaprune2026,
-  title   = {LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs},
+  title   = {LinguaSqueeze: Language-aware compression for Mixture-of-Experts LLMs},
   author  = {Akhmetova, Sophia},
   year    = {2026},
   version = {0.6.1},
-  url     = {https://github.com/s0nakh/linguaprune}
+  url     = {https://github.com/s0nakh/linguasqueeze}
 }
 ```
 
 **APA**
 
 ```text
-Akhmetova, S. (2026). LinguaPrune: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguaprune
+Akhmetova, S. (2026). LinguaSqueeze: Language-aware compression for Mixture-of-Experts LLMs (Version 0.6.1) [Computer software]. https://github.com/s0nakh/linguasqueeze
 ```
 
 ## ⚖️ Лицензия

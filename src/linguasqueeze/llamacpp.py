@@ -15,7 +15,7 @@ from typing import Sequence
 
 import numpy as np
 
-from linguaprune.exam import ExamItem
+from linguasqueeze.exam import ExamItem
 
 TOOL_TARGETS = ("llama-imatrix", "llama-quantize")
 T4_CMAKE_FLAGS = (  # CUDA for the T4 only; no VMM (no libcuda at build time); nothing we do not run

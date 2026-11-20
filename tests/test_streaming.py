@@ -11,7 +11,7 @@ if int(transformers.__version__.split(".")[0]) < 5:
 
 from transformers import AutoModelForCausalLM, OlmoeConfig, Qwen3MoeConfig  # noqa: E402
 
-from linguaprune.streaming import ScoredSequence, StreamedModel, stream_evaluate  # noqa: E402
+from linguasqueeze.streaming import ScoredSequence, StreamedModel, stream_evaluate  # noqa: E402
 
 TINY = dict(vocab_size=128, hidden_size=32, intermediate_size=16, num_hidden_layers=3, num_attention_heads=4,
             num_key_value_heads=2, num_experts=8, num_experts_per_tok=2, max_position_embeddings=64, pad_token_id=0)
@@ -99,7 +99,7 @@ def test_calibration_inputs_are_per_configuration_and_never_the_exam(tmp_path):
 def test_gptq_and_rtn_plans_run_end_to_end_through_streaming(tmp_path):
     import numpy as np
 
-    from linguaprune.gptq import make_quantization_prepare
+    from linguasqueeze.gptq import make_quantization_prepare
 
     torch.manual_seed(0)
     config = tiny_config("olmoe")
@@ -126,8 +126,8 @@ def test_gptq_and_rtn_plans_run_end_to_end_through_streaming(tmp_path):
 def test_bits_can_be_chosen_per_layer_from_live_router_traffic(tmp_path):
     import numpy as np
 
-    from linguaprune.gptq import make_quantization_prepare, router_traffic
-    from linguaprune.quant import allocate_bits_by_coverage
+    from linguasqueeze.gptq import make_quantization_prepare, router_traffic
+    from linguasqueeze.quant import allocate_bits_by_coverage
 
     torch.manual_seed(0)
     config = tiny_config("qwen3_moe")

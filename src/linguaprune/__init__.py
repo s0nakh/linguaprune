@@ -1,47 +1,17 @@
-"""LinguaPrune: language-aware compression for Mixture-of-Experts LLMs."""
+"""Old name of LinguaSqueeze, kept so code written for `linguaprune` keeps working.
 
-from linguaprune.pruning import (
-    MoEBlock,
-    PruneReport,
-    build_mask,
-    count_parameters,
-    find_moe_blocks,
-    language_frequency_score,
-    masked_experts,
-    masked_routing,
-    prune_experts,
-    row_share,
-    top_experts,
-)
-from linguaprune.quant import (
-    allocate_bits_by_coverage,
-    allocate_like,
-    expert_memory_bytes,
-    fake_quantize,
-    quantize_experts_,
-    restore_experts,
-    snapshot_experts,
-)
+`import linguaprune` and `import linguaprune.<module>` give the same module objects as `linguasqueeze`."""
 
-__version__ = "0.6.1"
+import importlib
+import pkgutil
+import sys
+import warnings
 
-__all__ = [
-    "allocate_bits_by_coverage",
-    "allocate_like",
-    "expert_memory_bytes",
-    "fake_quantize",
-    "quantize_experts_",
-    "restore_experts",
-    "snapshot_experts",
-    "MoEBlock",
-    "PruneReport",
-    "build_mask",
-    "count_parameters",
-    "find_moe_blocks",
-    "language_frequency_score",
-    "masked_experts",
-    "masked_routing",
-    "prune_experts",
-    "row_share",
-    "top_experts",
-]
+import linguasqueeze
+from linguasqueeze import *  # noqa: F401,F403
+from linguasqueeze import __all__, __version__  # noqa: F401
+
+warnings.warn("linguaprune was renamed to linguasqueeze; import linguasqueeze instead", DeprecationWarning, stacklevel=2)
+
+for _info in pkgutil.iter_modules(linguasqueeze.__path__):
+    sys.modules[f"{__name__}.{_info.name}"] = importlib.import_module(f"linguasqueeze.{_info.name}")

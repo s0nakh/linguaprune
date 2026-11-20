@@ -8,8 +8,8 @@ import numpy as np
 import pytest
 import torch
 
-from linguaprune.export import from_gptq, gptq_bits, pack_rows, qzeros_v1_to_v2, to_gptq, unpack_rows
-from linguaprune.gptq import gptq_quantize_batched, rtn_quantize
+from linguasqueeze.export import from_gptq, gptq_bits, pack_rows, qzeros_v1_to_v2, to_gptq, unpack_rows
+from linguasqueeze.gptq import gptq_quantize_batched, rtn_quantize
 
 
 @pytest.mark.parametrize("bits", [2, 3, 4, 8])
@@ -96,9 +96,9 @@ def _tiny_qwen3(tmp_path):
 
 def test_written_checkpoint_reproduces_the_simulated_scores_exactly(tmp_path):
     source = _tiny_qwen3(tmp_path)
-    from linguaprune.export import GPTQCheckpointWriter
-    from linguaprune.gptq import make_quantization_prepare
-    from linguaprune.streaming import ScoredSequence, StreamedModel, stream_evaluate
+    from linguasqueeze.export import GPTQCheckpointWriter
+    from linguasqueeze.gptq import make_quantization_prepare
+    from linguasqueeze.streaming import ScoredSequence, StreamedModel, stream_evaluate
 
     gen = torch.Generator().manual_seed(1)
     exam = [ScoredSequence(ids=tuple(torch.randint(1, 128, (n,), generator=gen).tolist()), span=(2, n),
@@ -149,8 +149,8 @@ def test_v2_qzeros_store_the_zero_points_themselves(bits):
 def test_convert_folder_to_v2_keeps_every_weight(tmp_path):
     from safetensors.torch import save_file
 
-    from linguaprune.export import convert_to_gptq_v2
-    from linguaprune.streaming import CheckpointReader
+    from linguasqueeze.export import convert_to_gptq_v2
+    from linguasqueeze.streaming import CheckpointReader
 
     torch.manual_seed(0)
     q3, s3, z3 = rtn_quantize(torch.randn(64, 256), 3, group_size=128)

@@ -53,7 +53,7 @@ def _kazmmlu_rows(language: str, n: int, seed: int):
 
 def build_exam(tokenizer) -> list[ExamItem]:
     """Rebuild the notebook 07 exam, in the same order, with the given (Qwen3) tokenizer."""
-    from linguaprune.belebele import build_example, load_eval_rows
+    from linguasqueeze.belebele import build_example, load_eval_rows
 
     def encode(text: str) -> tuple[int, ...]:
         return tuple(tokenizer(text, add_special_tokens=False).input_ids)

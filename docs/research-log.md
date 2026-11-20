@@ -82,7 +82,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 
 - **Problem.** Qwen3-30B-A3B weighs ~61 GB in 16-bit, while free Kaggle has 2 × 15 GB GPUs.
 - **Solution.**
-  - `linguaprune.streaming` loads one decoder layer at a time from the safetensors files.
+  - `linguasqueeze.streaming` loads one decoder layer at a time from the safetensors files.
   - It carries hidden states for several configurations side by side and scores sequences without materializing full-vocabulary logits.
 - **Verification.** Continuous-integration tests compare streamed scores with the normal forward pass on tiny real OLMoE and Qwen3-MoE models. They also check that each configuration's calibration never sees the exam.
 - **Incident.** On Kaggle's T4 (CUDA 13), batched `cholesky_inverse` (MAGMA) crashed with an illegal memory access. Now the inverse factor is computed per matrix via triangular solves, while the GPTQ column loop stays batched. This was caught by a 2-layer dry run before the full run.
@@ -166,7 +166,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 
 - **Question.** Do the 06 results survive when the model is written as real low-bit files and read back from disk?
 - **Setup.**
-  - Same model, calibration and exam as 06; GPTQ re-run with linguaprune 0.5.0, whose quantization grid stores fp16 scales and integer zero points exactly as the file does.
+  - Same model, calibration and exam as 06; GPTQ re-run with linguasqueeze 0.5.0, whose quantization grid stores fp16 scales and integer zero points exactly as the file does.
   - Written in the standard GPTQ v1 layout: experts 4 or 3 bits (group 128), attention 8 bits, embeddings and norms 16 bits. Per-module bit widths are declared in the `dynamic` field of `quantization_config`.
   - Every quantized row of the table is scored **from the written file**, not from the in-memory model. One Kaggle T4, 116 min including upload.
 - **Result.**
@@ -192,11 +192,11 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 - **Question.** Does a runtime we do not control read the files correctly and answer questions?
 - **Setup.**
   - [GPTQModel](https://github.com/ModelCloud/GPTQModel) 7.6.0 on transformers 5.20, torch kernel, two Kaggle T4.
-  - GPTQModel refuses asymmetric checkpoints in the classic GPTQ layout from other tools, so each download is converted to its `gptq_v2` layout first (zero points stored without the −1 offset; nothing else changes). LinguaPrune 0.5.1 adds this conversion.
-  - Tiny check: a random 2-layer Qwen3-MoE with mixed 3/4/8-bit modules, written by LinguaPrune and loaded by GPTQModel.
+  - GPTQModel refuses asymmetric checkpoints in the classic GPTQ layout from other tools, so each download is converted to its `gptq_v2` layout first (zero points stored without the −1 offset; nothing else changes). LinguaSqueeze 0.5.1 adds this conversion.
+  - Tiny check: a random 2-layer Qwen3-MoE with mixed 3/4/8-bit modules, written by LinguaSqueeze and loaded by GPTQModel.
   - Real models: 40 kk + 40 ru Belebele passages re-scored and compared with notebook 07 on the same passages; five questions in kk, ru and en, greedy decoding.
 - **Result.**
-  - Tiny check: 0.00003 nats per token between LinguaPrune and GPTQModel.
+  - Tiny check: 0.00003 nats per token between LinguaSqueeze and GPTQModel.
 
   | Model | GPU memory | kk ppl vs. notebook 07 | ru ppl vs. notebook 07 | Speed |
   |---|---|---|---|---|
@@ -213,7 +213,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 
 ## 2026-11-13 · 09 · Against popular quantized versions
 
-- **Question.** Popular GGUF files of the same model are tuned on English text. How much Kazakh and Russian do they lose at each size, compared with LinguaPrune?
+- **Question.** Popular GGUF files of the same model are tuned on English text. How much Kazakh and Russian do they lose at each size, compared with LinguaSqueeze?
 - **Setup.**
   - Nine files of Qwen3-30B-A3B-Instruct-2507 from the two most downloaded GGUF publishers (unsloth, bartowski), from Q6_K (25.1 GB) down to IQ2_M (9.9 GB).
   - llama.cpp (llama-cpp-python 0.3.36, built for T4) on two Kaggle T4, 4096-token context.
@@ -226,9 +226,9 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   | Q6_K (engine check) | 25.09 GB · 2.4× | +0.6% | +0.7% | +0.8% | 66.2 / 72.4 | 76.7 |
   | Q4_K_M | 18.56 GB · 3.3× | +2.2% | +2.2% | +2.1% | 64.3 / 71.4 | 78.7 |
   | UD-Q4_K_XL | 17.69 GB · 3.5× | +2.3% | +2.3% | +1.9% | 64.9 / 71.2 | 78.0 |
-  | **LinguaPrune kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
+  | **LinguaSqueeze kk+ru 4-bit** | **17.39 GB · 3.5×** | **+1.2%** | **+1.4%** | +2.3% | 64.9 / 71.7 | 76.0 |
   | IQ4_XS | 16.38 GB · 3.7× | +4.3% | +3.6% | +6.5% | 64.9 / 72.2 | 75.3 |
-  | **LinguaPrune kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
+  | **LinguaSqueeze kk+ru 4/3-bit** | **15.24 GB · 4.0×** | **+1.3%** | **+0.4%** | +3.2% | 65.1 / 70.9 | 78.7 |
   | UD-Q3_K_XL | 13.83 GB · 4.4× | +5.7% | +3.0% | +5.7% | 66.2 / 72.4 | 74.0 |
   | UD-IQ3_XXS | 12.91 GB · 4.7× | +5.4% | +3.6% | +3.2% | 65.1 / 70.4 | 75.3 |
   | UD-Q2_K_XL | 11.79 GB · 5.2× | +12.1% | +7.2% | +10.0% | 64.3 / 69.1 | 74.7 |
@@ -238,8 +238,8 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
   ![Kazakh loss vs. size](../assets/kazakh_vs_gguf.png)
 
 - **Observations.**
-  - Between 15 and 19 GB, only the LinguaPrune files stay within 2% for both Kazakh and Russian. The 4/3-bit file is 1.1 GB smaller than IQ4_XS and loses 3.4× less Kazakh and 9× less Russian. *(Superseded on 2026-11-18: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
-  - The engine check costs 0.6–0.8% even at 6 bits, so part of every GGUF number is the runtime, not the quantization. Subtracting it, Q4_K_M still loses more Kazakh (+1.6%) than either LinguaPrune file, which are larger by nothing (4-bit) or 3.3 GB smaller (4/3-bit).
+  - Between 15 and 19 GB, only the LinguaSqueeze files stay within 2% for both Kazakh and Russian. The 4/3-bit file is 1.1 GB smaller than IQ4_XS and loses 3.4× less Kazakh and 9× less Russian. *(Superseded on 2026-11-18: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
+  - The engine check costs 0.6–0.8% even at 6 bits, so part of every GGUF number is the runtime, not the quantization. Subtracting it, Q4_K_M still loses more Kazakh (+1.6%) than either LinguaSqueeze file, which are larger by nothing (4-bit) or 3.3 GB smaller (4/3-bit).
   - We pay in English: +3.2% for the 4/3-bit file vs. +2.1% for Q4_K_M. That is the trade we chose.
   - Below 14 GB, popular files lose Kazakh fastest. At 2 bits Kazakh loses 1.5–2.8× more than Russian, and KazMMLU kk drops 5.4 points for IQ2_M at 9.9 GB.
   - KazMMLU and Belebele differences above 12 GB are within noise on 370 and 150 questions. The lead is in perplexity (keeping the text), not yet in knowledge: UD-Q3_K_XL at 13.8 GB scores 66.2% on KazMMLU kk vs. 65.1% for our 15.24 GB file. *(Superseded on 2026-11-18: see the entry "07b" below. The 2% statement holds around 15 GB only; the KazMMLU sample was too small.)*
@@ -309,7 +309,7 @@ Negative results stay in. Raw outputs are in [`experiments/`](../experiments/), 
 - **Result.**
   - Original: 62.1% (kk) and 70.9% (ru). 4/3-bit file: 60.4% and 69.3%, a loss of 1.76 points (95% CI −2.38 to −1.14, p < 10⁻⁷) and 1.58 points (−2.05 to −1.10, p < 10⁻⁹). 4-bit file: 61.0% and 70.5%, a loss of 1.08 points (−1.59 to −0.58, p = 5.5·10⁻⁵) and 0.37 points (−0.75 to 0.02, p = 0.065, not significant).
   - On the 762 questions of the earlier sample the new run gives the same answer as notebook 07 on 761 of 762 (original) and on 762 of 762 (both files); the one difference is a near-tie. Script: `reproduction_check.py` in the same folder.
-- **Corrections.** Earlier statements are superseded: (1) "KazMMLU within noise" held only for the small sample; the full exam shows a small but real loss. (2) The third part of the pre-registered target, no significant KazMMLU drop, was not met. (3) "Only LinguaPrune stays within 2% between 15 and 19 GB" holds around 15 GB only; at 17–18 GB our 4-bit file is on par with the best GGUF files, a difference within the llama.cpp engine offset of about 0.7 points. (4) The English-control comparison changes bit allocation and calibration text together, so it does not isolate the allocation; a control with uniform or random allocation at equal memory is still missing. *(Closed 19.11.2026: see the 07c entry below.)*
+- **Corrections.** Earlier statements are superseded: (1) "KazMMLU within noise" held only for the small sample; the full exam shows a small but real loss. (2) The third part of the pre-registered target, no significant KazMMLU drop, was not met. (3) "Only LinguaSqueeze stays within 2% between 15 and 19 GB" holds around 15 GB only; at 17–18 GB our 4-bit file is on par with the best GGUF files, a difference within the llama.cpp engine offset of about 0.7 points. (4) The English-control comparison changes bit allocation and calibration text together, so it does not isolate the allocation; a control with uniform or random allocation at equal memory is still missing. *(Closed 19.11.2026: see the 07c entry below.)*
 - **Decision.** Preprint version 2 (Zenodo, same concept DOI) and updated model cards carry these numbers. Next: the allocation control.
 
 ## 2026-11-19 · 07c · Is it the allocation?
