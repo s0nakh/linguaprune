@@ -444,7 +444,7 @@ LinguaSqueeze-ді өз жұмысыңызда қолансаңыз, оған с
 **BibTeX**
 
 ```bibtex
-@software{linguaprune2026,
+@software{linguasqueeze2026,
   title   = {LinguaSqueeze: Language-aware compression for Mixture-of-Experts LLMs},
   author  = {Akhmetova, Sophia},
   year    = {2026},
