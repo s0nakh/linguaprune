@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "linguasqueeze"
 version = "0.7.0"
-description = "Language-aware compression of Mixture-of-Experts LLMs for Kazakh, Russian and other languages"
+description = "Compress LLMs for Kazakh and Russian so they run on affordable hardware without losing the language"
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"

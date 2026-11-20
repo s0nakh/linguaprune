@@ -2,9 +2,8 @@
 
 <img src="assets/banner.png" alt="LinguaSqueeze" width="720">
 
-**Language-aware compression for Mixture-of-Experts LLMs.**
-Measure which experts your languages use, give them the bits, calibrate on your languages, and check that nothing broke.
-First target: Kazakh 🇰🇿 + Russian 🇷🇺.
+**Compress LLMs for Kazakh 🇰🇿 and Russian 🇷🇺 so they run on affordable hardware without losing the language.**
+How: measure which experts of a Mixture-of-Experts model your languages use, give them the bits, calibrate on your languages, and check that nothing broke.
 
 <sub>Formerly <b>LinguaPrune</b>: renamed on 20.11.2026 because the method mostly squeezes experts into fewer bits rather than removing them. Old links and <code>import linguaprune</code> keep working.</sub>
 
