@@ -133,6 +133,8 @@ kk + ru мәтіні ──► роутер статистикасы ──► �
 
 ## 📓 Дәптерлер
 
+01–10 дәптерлері жобаның бұрынғы атауымен, LinguaPrune, орындалған; әрқайсысы өзі қолданған код нұсқасын орнатады, сондықтан өзгеріссіз іске қосылады.
+
 | # | Дәптер | Сұрақ | Өз көшірмеңізді іске қосу |
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Әр тіл қай сарапшыларды қолданады? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/01_expert_profiling.ipynb) |

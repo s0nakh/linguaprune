@@ -133,6 +133,8 @@ MoE на 30 млрд параметров в 16 битах весит 61 ГБ, �
 
 ## 📓 Ноутбуки
 
+Ноутбуки 01–10 выполнены под прежним названием проекта, LinguaPrune; каждый устанавливает ровно ту версию кода, с которой работал, поэтому они запускаются без изменений.
+
 | # | Ноутбук | Вопрос | Запустить свою копию |
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Каких экспертов использует каждый язык? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/01_expert_profiling.ipynb) |

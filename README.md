@@ -133,6 +133,8 @@ Every compressed model is compared **per question** with the original (paired bo
 
 ## 📓 Notebooks
 
+Notebooks 01–10 were run under the project's former name, LinguaPrune; each one installs the exact commit it used, so they still run unchanged.
+
 | # | Notebook | Question | Run your own copy |
 |---|---|---|---|
 | 01 | [`01_expert_profiling`](notebooks/01_expert_profiling.ipynb) | Which experts does each language use? | [![Open in Kaggle](https://kaggle.com/static/images/open-in-kaggle.svg)](https://kaggle.com/kernels/welcome?src=https://github.com/s0nakh/linguasqueeze/blob/main/notebooks/01_expert_profiling.ipynb) |
